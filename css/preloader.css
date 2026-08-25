@@ -1,0 +1,203 @@
+:root {
+  --preloader-bg: #07162d;
+  --preloader-panel: rgba(10, 28, 56, 0.92);
+  --preloader-border: var(--accent-color, #1c5cff);
+  --preloader-glow: rgba(28, 92, 255, 0.22);
+  --preloader-blue: var(--accent-color, #1c5cff);
+  --preloader-cyan: var(--tabs-active-color, #32d5ff);
+  --preloader-lime: #8cf07d;
+  --preloader-gold: #ffd25e;
+  --preloader-text: #eef6ff;
+}
+
+#preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top, rgba(28,92,255,0.24), transparent 42%),
+    rgba(5, 16, 31, 0.88);
+  backdrop-filter: blur(10px);
+  color: var(--preloader-text);
+}
+
+.parcel-preloader-shell {
+  width: min(480px, calc(100vw - 48px));
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.parcel-preloader-shell[data-state="done"] {
+  opacity: 0;
+  transform: scale(0.985);
+}
+
+.parcel-preloader-card {
+  width: min(480px, calc(100vw - 48px));
+  padding: 28px;
+  border: 1px solid var(--preloader-border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(15,34,63,0.96) 0%, rgba(8,19,36,0.96) 100%);
+  box-shadow:
+    0 22px 48px rgba(0,0,0,0.36),
+    0 0 0 1px color-mix(in srgb, var(--preloader-border) 38%, transparent);
+  color: #f7fbff;
+  text-align: center;
+}
+
+.parcel-preloader-brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 138px;
+  margin-bottom: 18px;
+  padding: 12px 0 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--preloader-border) 62%, transparent);
+}
+
+.parcel-preloader-brand-logo {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  transform: translateX(-50%);
+  width: 106px;
+  height: auto;
+  opacity: 0.22;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,0.22));
+  pointer-events: none;
+}
+
+.parcel-preloader-brand-text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 44px;
+}
+
+.parcel-preloader-brand-welcome {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.55px;
+  text-transform: uppercase;
+  color: #dfe8f8;
+}
+
+.parcel-preloader-brand-title {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #ffffff;
+}
+
+.parcel-preloader-brand-subtitle {
+  font-size: 18px;
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: #1c5cff;
+}
+
+.parcel-preloader-status-block {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.parcel-preloader-status-label {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #dfe8f8;
+}
+
+.parcel-preloader-status {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.parcel-preloader-user {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--preloader-cyan) 72%, #ffffff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.parcel-preloader-progress {
+  position: relative;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--preloader-blue) 20%, rgba(255,255,255,0.06));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--preloader-border) 65%, transparent);
+  margin-top: 2px;
+}
+
+.parcel-preloader-progress-bar {
+  position: absolute;
+  inset: 0;
+  width: 38%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--preloader-cyan) 0%,
+    color-mix(in srgb, var(--preloader-cyan) 55%, var(--preloader-blue)) 40%,
+    var(--preloader-blue) 78%,
+    var(--preloader-cyan) 100%
+  );
+  box-shadow: 0 0 16px color-mix(in srgb, var(--preloader-cyan) 58%, var(--preloader-blue));
+  animation: parcel-progress-slide 1.8s ease-in-out infinite;
+}
+
+.parcel-preloader-shell[data-state="error"] .parcel-preloader-status {
+  color: #ffd8b1;
+}
+
+.parcel-preloader-shell[data-state="error"] .parcel-preloader-brand-subtitle {
+  color: #ffb487;
+}
+
+.parcel-preloader-shell[data-state="error"] .parcel-preloader-progress-bar {
+  width: 100%;
+  animation: none;
+  background: linear-gradient(90deg, #ff8c69 0%, var(--preloader-gold) 100%);
+  box-shadow: 0 0 18px rgba(255, 183, 112, 0.34);
+}
+
+@keyframes parcel-progress-slide {
+  0% { transform: translateX(-120%); }
+  55% { transform: translateX(155%); }
+  100% { transform: translateX(155%); }
+}
+
+@media (max-width: 640px) {
+  #preloader {
+    padding: 16px;
+  }
+
+  .parcel-preloader-card {
+    width: min(480px, calc(100vw - 32px));
+    padding: 22px;
+  }
+
+  .parcel-preloader-brand {
+    min-height: 124px;
+  }
+
+  .parcel-preloader-brand-logo {
+    width: 96px;
+  }
+}

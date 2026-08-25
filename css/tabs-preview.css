@@ -1,0 +1,253 @@
+:root.tabs-preview {
+	color-scheme: dark;
+	/* Preview accent (can be overridden by setting --accent-color elsewhere) */
+	--accent-color: #32d5ff;
+	--tabs-active-color: var(--accent-color, #32d5ff);
+}
+
+.tabs-preview .tabs-preview-main {
+	padding: 16px;
+	color: #e9eefc;
+}
+
+.tabs-preview .tabs-preview-main h1 {
+	margin: 14px 0 6px;
+	font-size: 18px;
+}
+
+.tabs-preview .tabs-preview-main p {
+	margin: 0;
+	opacity: 0.9;
+}
+
+/* Preview-only: segmented / pill-style header tabs (keeps existing colors/icons) */
+.tabs-preview .header-tabs {
+	gap: 2px;
+	align-items: center;
+	align-self: center;
+	margin-left: 14px;
+	margin-right: 0;
+	padding: 0;
+	border-radius: 0;
+	background: transparent;
+	border: 0;
+	box-shadow: none;
+	backdrop-filter: none;
+}
+
+.tabs-preview .header-tab {
+	--tab-muted: #7d8696;
+	height: 46px;
+	min-width: 116px;
+	padding: 6px 14px 7px;
+	border-radius: 12px;
+	margin: 0;
+	border: 0;
+	/* No chip fill; keep it feeling like it's part of the header */
+	background: transparent;
+	color: var(--tab-muted);
+	opacity: 0.92;
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	text-shadow: none;
+	box-shadow:
+		/* subtle "carved" boundary without a visible filled chip */
+		inset 0 1px 0 rgba(255,255,255,0.05),
+		inset 0 -1px 0 rgba(0,0,0,0.45);
+	transform: none;
+	transition: background-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+/* "Carved/embossed" look (more dramatic): bright top edge + deep lower shadow */
+.tabs-preview .header-tab span {
+	text-shadow:
+		0 1px 0 rgba(255,255,255,0.22),
+		0 -1px 0 rgba(0,0,0,0.72),
+		0 6px 14px rgba(0,0,0,0.30);
+}
+
+.tabs-preview .header-tab calcite-icon {
+	filter:
+		drop-shadow(0 1px 0 rgba(255,255,255,0.20))
+		drop-shadow(0 -1px 0 rgba(0,0,0,0.72))
+		drop-shadow(0 6px 14px rgba(0,0,0,0.28));
+}
+
+/* Active: keep the carved feel but add a touch of colored glow */
+.tabs-preview .header-tab.active span,
+.tabs-preview .header-tab.active calcite-icon {
+	filter:
+		drop-shadow(0 1px 0 rgba(255,255,255,0.16))
+		drop-shadow(0 -1px 0 rgba(0,0,0,0.78))
+		drop-shadow(0 0 10px color-mix(in srgb, var(--tabs-active-color) 26%, transparent))
+		drop-shadow(0 10px 18px rgba(0,0,0,0.22));
+}
+
+.tabs-preview .header-tab.active span {
+	text-shadow:
+		0 1px 0 rgba(255,255,255,0.16),
+		0 -1px 0 rgba(0,0,0,0.78),
+		0 0 10px color-mix(in srgb, var(--tabs-active-color) 22%, transparent),
+		0 10px 18px rgba(0,0,0,0.22);
+}
+
+.tabs-preview .header-tab::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: -7px;
+	width: 36px;
+	height: 3px;
+	transform: translateX(-50%);
+	opacity: 0;
+	pointer-events: none;
+	z-index: 2;
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		color-mix(in srgb, var(--tabs-active-color) 85%, transparent) 50%,
+		transparent 100%
+	);
+	border-radius: 999px;
+	box-shadow:
+		0 0 10px color-mix(in srgb, var(--tabs-active-color) 62%, transparent),
+		0 0 18px color-mix(in srgb, var(--tabs-active-color) 34%, transparent),
+		0 10px 18px color-mix(in srgb, var(--tabs-active-color) 12%, transparent);
+	filter: blur(0.15px);
+	transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.tabs-preview .header-tab::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: -4px;
+	width: 92px;
+	height: 48px;
+	transform: translateX(-50%);
+	opacity: 0;
+	pointer-events: none;
+	z-index: 1;
+	background:
+		radial-gradient(
+			ellipse 60px 26px at 50% 14px,
+			color-mix(in srgb, var(--tabs-active-color) 30%, transparent) 0%,
+			transparent 72%
+		),
+		radial-gradient(
+			ellipse 86px 34px at 50% 24px,
+			color-mix(in srgb, var(--tabs-active-color) 14%, transparent) 0%,
+			transparent 70%
+		),
+		linear-gradient(
+			to bottom,
+			color-mix(in srgb, var(--tabs-active-color) 10%, transparent) 0%,
+			transparent 78%
+		);
+	filter: blur(1.2px);
+	transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.tabs-preview .header-tab span {
+	font-size: 12px;
+	line-height: 1;
+	color: currentColor;
+}
+
+.tabs-preview .header-tab calcite-icon {
+	transform: scale(0.95);
+	color: currentColor;
+	--calcite-icon-color: currentColor;
+}
+
+.tabs-preview .header-tab:not(.active) {
+	box-shadow: none;
+}
+
+.tabs-preview .header-tab:hover {
+	transform: translateY(-1px);
+	box-shadow:
+		inset 0 1px 0 rgba(255,255,255,0.06),
+		inset 0 -1px 0 rgba(0,0,0,0.50),
+		0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.tabs-preview .header-tab:focus-visible {
+	outline: 2px solid color-mix(in srgb, var(--tabs-active-color) 70%, #ffffff 30%);
+	outline-offset: 2px;
+}
+
+.tabs-preview .header-tab.active {
+	height: 46px;
+	/* Keep same background so it feels "carved" into the header */
+	background: transparent;
+	/* Use app accent when available, else fallback cyan */
+	color: color-mix(in srgb, var(--tabs-active-color) 86%, #ffffff 14%);
+	box-shadow:
+		/* recessed/engraved shell */
+		inset 0 1px 0 rgba(255,255,255,0.06),
+		inset 0 -1px 0 rgba(0,0,0,0.55);
+	transform: none;
+	margin: 0;
+	opacity: 1;
+}
+
+/* Preview-only: ignore per-tab `--tab-color` values from `css/main.css` */
+.tabs-preview #parcelViewerTab,
+.tabs-preview #publicWorksTab,
+.tabs-preview #specialAssessTab {
+	--tab-color: var(--tabs-active-color);
+}
+
+.tabs-preview .header-tab.active::before {
+	opacity: 0.95;
+	transform: translateX(-50%) translateY(0);
+}
+
+.tabs-preview .header-tab.active::after {
+	opacity: 0.78;
+	transform: translateX(-50%) translateY(0);
+}
+
+/* Flat side lighting for selected tab (no top/bottom edge) */
+.tabs-preview .header-tab.active {
+	background-image:
+		/* left soft spread */
+		linear-gradient(
+			90deg,
+			color-mix(in srgb, var(--tabs-active-color) 18%, transparent),
+			transparent 70%
+		),
+		/* right soft spread */
+		linear-gradient(
+			270deg,
+			color-mix(in srgb, var(--tabs-active-color) 18%, transparent),
+			transparent 70%
+		),
+		/* left crisp bar */
+		linear-gradient(
+			180deg,
+			color-mix(in srgb, var(--tabs-active-color) 62%, transparent),
+			color-mix(in srgb, var(--tabs-active-color) 22%, transparent)
+		),
+		/* right crisp bar */
+		linear-gradient(
+			180deg,
+			color-mix(in srgb, var(--tabs-active-color) 62%, transparent),
+			color-mix(in srgb, var(--tabs-active-color) 22%, transparent)
+		);
+	background-repeat: no-repeat;
+	background-size:
+		12px calc(100% - 18px),
+		12px calc(100% - 18px),
+		2px calc(100% - 18px),
+		2px calc(100% - 18px);
+	background-position:
+		left 6px top 9px,
+		right 6px top 9px,
+		left 6px top 9px,
+		right 6px top 9px;
+}

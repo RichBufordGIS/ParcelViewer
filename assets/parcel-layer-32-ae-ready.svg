@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>Parcel Layer 32 AE Ready</title>
+  <desc>
+    Animation-ready rebuild of the Esri parcel-layer icon. Lower-left parcel cells are split
+    into separate groups so they can be animated one by one in After Effects.
+  </desc>
+
+  <g id="outline_frame">
+    <rect x="6" y="6" width="22" height="22" rx="4" ry="4" fill="none" stroke="#ffffff" stroke-width="1.1"/>
+  </g>
+
+  <g id="parcel_static_top_left">
+    <rect x="8" y="8" width="8" height="5" rx="1" ry="1" fill="#ffffff"/>
+  </g>
+
+  <g id="parcel_static_top_mid">
+    <rect x="16.5" y="8" width="5.5" height="4" rx="1" ry="1" fill="#ffffff"/>
+  </g>
+
+  <g id="parcel_static_top_right">
+    <rect x="22.5" y="8" width="2.5" height="8" rx="1" ry="1" fill="#ffffff"/>
+  </g>
+
+  <g id="parcel_static_mid_right_a">
+    <rect x="16.5" y="12.8" width="5" height="3.8" rx="1" ry="1" fill="#ffffff"/>
+  </g>
+
+  <g id="parcel_static_mid_right_b">
+    <rect x="16.5" y="17.3" width="3.8" height="4.2" rx="1" ry="1" fill="#ffffff"/>
+  </g>
+
+  <g id="parcel_static_mid_right_c">
+    <rect x="20.8" y="17.3" width="4.2" height="4.7" rx="1" ry="1" fill="#ffffff"/>
+  </g>
+
+  <g id="parcel_static_bottom_right">
+    <rect x="14.5" y="22.4" width="10.5" height="3.2" rx="1" ry="1" fill="#ffffff"/>
+  </g>
+
+  <g id="connector_right_to_lower_left">
+    <path d="M16 15.7h1.1" fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round"/>
+  </g>
+
+  <g id="connector_bottom_to_right">
+    <path d="M13.6 23.9h0.9" fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round"/>
+  </g>
+
+  <g id="parcel_build_1">
+    <rect x="8" y="14" width="4.2" height="4.2" rx="1" ry="1" fill="#ffffff"/>
+  </g>
+
+  <g id="parcel_build_2">
+    <rect x="12.8" y="14" width="3.8" height="4.2" rx="1" ry="1" fill="#ffffff"/>
+  </g>
+
+  <g id="parcel_build_3">
+    <rect x="8" y="18.8" width="3.8" height="3.8" rx="1" ry="1" fill="#ffffff"/>
+  </g>
+
+  <g id="parcel_build_4">
+    <rect x="12.4" y="18.8" width="4.2" height="3.8" rx="1" ry="1" fill="#ffffff"/>
+  </g>
+
+  <g id="parcel_build_5">
+    <rect x="8" y="23.2" width="8.6" height="2.4" rx="0.9" ry="0.9" fill="#ffffff"/>
+  </g>
+</svg>
