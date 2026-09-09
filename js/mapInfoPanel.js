@@ -149,6 +149,13 @@ function initializeMapInfoPanel({
 	}
 
 	function buildTabButtons() {
+		if (pageDefinitions.length <= 1) {
+			settingsTabButtons.hidden = true;
+			settingsTabButtons.innerHTML = "";
+			return;
+		}
+
+		settingsTabButtons.hidden = false;
 		settingsTabButtons.innerHTML = pageDefinitions.map((pageDef, index) => `
 			<button
 				type="button"

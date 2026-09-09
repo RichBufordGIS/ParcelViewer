@@ -26,6 +26,7 @@
 		height: 100%;
 		min-width: 0;
 		flex: 1 1 100%;
+		padding-left: 0;
 		padding-right: 48px;
 		padding-bottom: 3px;
 		gap: 8px;
@@ -231,6 +232,10 @@
 		padding: 8px;
 	}
 
+	#page-parcel #floorPanel {
+		max-height: min(32vh, 260px);
+	}
+
 	#left-sidebar-shell.collapsed {
 		width: 0;
 	}
@@ -404,6 +409,23 @@
 
 	footer {
 		display: none;
+	}
+}
+
+@media (max-width: 720px) {
+	.app-splash-overlay {
+		align-items: flex-start;
+		overflow: auto;
+		padding: 18px;
+	}
+
+	.app-splash-card {
+		width: 100%;
+		margin: 18px 0;
+	}
+
+	.app-splash-points {
+		grid-template-columns: 1fr;
 	}
 }
 

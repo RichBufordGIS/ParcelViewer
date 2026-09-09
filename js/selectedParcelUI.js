@@ -22,7 +22,7 @@ import {
  * @param {Function} refs.clearHighlightsAndSets        () => void
  * @param {Function} refs.syncParcelListSelection       () => void
  * @param {Function} refs.updateSelectedParcelBadge     () => void
- * @param {Function} refs.getTylerDataByParcel          (parcelNumber) => Promise
+ * @param {Function} refs.getTylerDataByParcels         (parcelNumbers) => Promise<Map>
  *
  * LRC form callbacks (wired in main.js after lrcForms.initLrcForms):
  * @param {Function} refs.getOpenLrcFeatureForm         () => Function
@@ -54,10 +54,11 @@ export function initSelectedParcelUI({
 	clearHighlightsAndSets,
 	syncParcelListSelection,
 	updateSelectedParcelBadge,
-	getTylerDataByParcel,
+	getTylerDataByParcels,
 	onSelectedParcelHover,
 	onSelectedParcelHoverEnd,
 	onSelectedParcelRowClick,
+	onSelectionCleared,
 	clearOwnerParcelLocationPoints,
 	refreshOwnerParcelLocationPoints,
 	refreshOwnerParcelLocationPointsAndZoom,
@@ -97,6 +98,12 @@ export function initSelectedParcelUI({
 
 	// ---- Search bar sync ----------------------------------------------------
 
+	function getSelectedParcelSearchDisplay(names) {
+		if (!names.length) return "";
+		if (names.length === 1) return names[0];
+		return `${names.length} parcels selected (max 20)`;
+	}
+
 	function syncSearchBarWithSelectedParcels() {
 		if (getCurrentPage() !== "parcel") return;
 		if (searchEl?.dataset?.preserveSearchDisplay === "true") return;
@@ -105,10 +112,15 @@ export function initSelectedParcelUI({
 
 		const names = selectedParcels.map((feature) => getParcelDisplayName(feature)).filter(Boolean);
 		const joined = names.join(", ");
+		const displayValue = getSelectedParcelSearchDisplay(names);
+		const searchTextArea = document.getElementById("searchTextArea");
+		if (searchTextArea) { searchTextArea.value = joined; searchTextArea.title = joined; }
 
 		if (searchEl) {
-			searchEl.value = joined;
-			searchEl.searchTerm = joined;
+			searchEl.value = displayValue;
+			searchEl.searchTerm = displayValue;
+			searchEl.title = joined;
+			searchEl.dataset.selectedParcelList = joined;
 			searchEl.dataset.suppressSuggestions = "true";
 			searchEl.close?.();
 			requestAnimationFrame(() => searchEl.close?.());
@@ -119,7 +131,7 @@ export function initSelectedParcelUI({
 
 	// ---- Single-parcel iframe staging ---------------------------------------
 
-	async function stageSingleParcelIframes(contentEl, { parcelNumber, renderVersion }) {
+	async function stageSingleParcelIframes(contentEl, { parcelNumber, photoParcelNumber = parcelNumber, renderVersion }) {
 		if (!contentEl || renderVersion !== selectedParcelRenderVersion) return;
 
 		contentEl.innerHTML = `
@@ -139,9 +151,9 @@ export function initSelectedParcelUI({
 
 		photosSlot.innerHTML = `<div id="singleParcelPhotoShell" class="tyler-photo-shell"></div>`;
 		const photoShell = document.getElementById("singleParcelPhotoShell");
-		const normalizedParcel = normalizeParcelForTyler(parcelNumber);
+		const normalizedParcel = normalizeParcelForTyler(photoParcelNumber);
 
-		void loadTylerPhotoViewer(photoShell, normalizedParcel, {
+		void loadTylerPhotoViewer(photoShell, [...new Set([normalizedParcel, photoParcelNumber, parcelNumber, getTylerLookupValue(getSelectedParcels()[0])].filter(Boolean))], {
 			shouldRender: () =>
 				renderVersion === selectedParcelRenderVersion && photoShell?.isConnected === true
 		});
@@ -182,9 +194,27 @@ export function initSelectedParcelUI({
 		});
 	}
 
+	async function removeSelectedParcelFromPanel(selectionKey, rowEl) {
+		if (!removeSelectedParcelByKey(selectionKey)) return;
+
+		rowEl?.remove?.();
+		onSelectedParcelHoverEnd?.();
+		refreshOwnerParcelLocationPoints?.();
+		await refreshOwnerParcelLocationPointsAndZoom?.();
+		syncParcelListSelection();
+		updateSelectedParcelBadge();
+		syncSearchBarWithSelectedParcels();
+
+		if (getSelectedParcels().length === 0) {
+			await onSelectionCleared?.();
+		}
+
+		await updateSelectedPanel();
+	}
+
 	// ---- Right-sidebar render -----------------------------------------------
 
-	async function renderSelectedParcelSidebar(renderVersion, selectedSnapshot) {
+	async function renderSelectedParcelSidebar(renderVersion, selectedSnapshot, tylerByParid) {
 		if (renderVersion !== selectedParcelRenderVersion) return;
 
 		const snapshot = selectedSnapshot || [...getSelectedParcels()];
@@ -229,8 +259,14 @@ export function initSelectedParcelUI({
 
 		if (isSingle) {
 			contentEl.classList.add("single-parcel-frame");
-			const name = getParcelDisplayName(snapshot[0]);
-			void stageSingleParcelIframes(contentEl, { parcelNumber: name, renderVersion });
+			const feature = snapshot[0];
+			const name = getParcelDisplayName(feature);
+			const photoLookupValue = getTylerLookupValue(feature) || name;
+			void stageSingleParcelIframes(contentEl, {
+				parcelNumber: name,
+				photoParcelNumber: photoLookupValue,
+				renderVersion
+			});
 
 			const lrcBtn = document.getElementById("openLrcFormBtnSingle");
 			if (lrcBtn) {
@@ -244,9 +280,7 @@ export function initSelectedParcelUI({
 				const selectionKey = getSelectionKey(f);
 				const name = getParcelDisplayName(f);
 				const lookupValue = getTylerLookupValue(f) || name;
-				let tylerData = { ownerName: "Could not be found", taxDistrict: "Could not be found" };
-
-				try { tylerData = await getTylerDataByParcel(lookupValue); } catch {}
+				const tylerData = tylerByParid.get(normalizeParcelForTyler(lookupValue)) || { ownerName: "Could not be found", taxDistrict: "Could not be found" };
 
 				if (renderVersion !== selectedParcelRenderVersion) return;
 
@@ -286,12 +320,7 @@ export function initSelectedParcelUI({
 
 				const removeButton = div.querySelector(".remove-button");
 				removeButton.onclick = async () => {
-					if (!removeSelectedParcelByKey(row.selectionKey)) return;
-					onSelectedParcelHoverEnd?.();
-					refreshOwnerParcelLocationPoints?.();
-					await refreshOwnerParcelLocationPointsAndZoom?.();
-					syncParcelListSelection();
-					await updateSelectedPanel();
+					await removeSelectedParcelFromPanel(row.selectionKey, div);
 				};
 				wireSelectedParcelRowInteractions(div, row.feature, removeButton);
 
@@ -324,6 +353,10 @@ export function initSelectedParcelUI({
 		const selectedParcels = getSelectedParcels();
 		const selectedSnapshot = [...selectedParcels];
 		const shouldRenderSummaryRows = selectedSnapshot.length > 1;
+		const tylerByParid = shouldRenderSummaryRows
+			? await getTylerDataByParcels(selectedSnapshot.map(f => getTylerLookupValue(f) || getParcelDisplayName(f)))
+			: new Map();
+		if (renderVersion !== selectedParcelRenderVersion) return;
 
 		if (selectedParcelContent2d) selectedParcelContent2d.innerHTML = "";
 		if (selectedParcelContent3d) selectedParcelContent3d.innerHTML = "";
@@ -332,9 +365,7 @@ export function initSelectedParcelUI({
 			const selectionKey = getSelectionKey(f);
 			const name = getParcelDisplayName(f);
 			const lookupValue = getTylerLookupValue(f) || name;
-			let tylerData = { ownerName: "Could not be found", taxDistrict: "Could not be found" };
-
-			try { tylerData = await getTylerDataByParcel(lookupValue); } catch {}
+			const tylerData = tylerByParid.get(normalizeParcelForTyler(lookupValue)) || { ownerName: "Could not be found", taxDistrict: "Could not be found" };
 
 			if (renderVersion !== selectedParcelRenderVersion) return;
 
@@ -358,12 +389,7 @@ export function initSelectedParcelUI({
 
 				const removeButton = div.querySelector(".remove-button");
 				removeButton.onclick = async () => {
-					if (!removeSelectedParcelByKey(selectionKey)) return;
-					onSelectedParcelHoverEnd?.();
-					refreshOwnerParcelLocationPoints?.();
-					await refreshOwnerParcelLocationPointsAndZoom?.();
-					syncParcelListSelection();
-					await updateSelectedPanel();
+					await removeSelectedParcelFromPanel(selectionKey, div);
 				};
 				wireSelectedParcelRowInteractions(div, f, removeButton);
 
@@ -380,7 +406,7 @@ export function initSelectedParcelUI({
 
 		updateSelectedParcelBadge();
 		syncSearchBarWithSelectedParcels();
-		await renderSelectedParcelSidebar(renderVersion, selectedSnapshot);
+		await renderSelectedParcelSidebar(renderVersion, selectedSnapshot, tylerByParid);
 		refreshOwnerParcelLocationPoints?.();
 	}
 
@@ -389,6 +415,12 @@ export function initSelectedParcelUI({
 	async function clearAllSelectedParcels() {
 		const selectedParcels = getSelectedParcels();
 		selectedParcels.length = 0;
+		window.dispatchEvent(new CustomEvent("parcelviewer:selected-parcels-changed", {
+			detail: {
+				count: 0,
+				hasCondoSelection: false
+			}
+		}));
 
 		clearHighlightsAndSets();
 		onSelectedParcelHoverEnd?.();
@@ -402,6 +434,7 @@ export function initSelectedParcelUI({
 			);
 		}
 
+		await onSelectionCleared?.();
 		await updateSelectedPanel();
 	}
 

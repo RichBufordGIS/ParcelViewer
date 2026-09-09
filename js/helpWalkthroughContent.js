@@ -37,7 +37,7 @@ export const HELP_WALKTHROUGHS = [
 	{
 		id: "map-layer-info",
 		title: "Open map layer info",
-		description: "Review the map, scene, layers, tables, ownership, and service links loaded on each app tab.",
+		description: "Review the public map, scene, layers, tables, ownership, and service links.",
 		icon: "book",
 		actionLabel: "Start walkthrough"
 	}
@@ -51,13 +51,8 @@ function renderAppPreview() {
 					<img src="https://jcgis.jacksongov.org/images/jackson-county-logo.png" alt="">
 					<div>
 						<div class="app-preview-title">Parcel Viewer</div>
-						<div class="app-preview-subtitle">Internal</div>
+						<div class="app-preview-subtitle">Public</div>
 					</div>
-				</div>
-				<div class="app-preview-tabs">
-					<div class="app-preview-tab active"><calcite-icon icon="parcel-layer" scale="s"></calcite-icon><span>Parcel Viewer</span></div>
-					<div class="app-preview-tab"><calcite-icon icon="wrench" scale="s"></calcite-icon><span>Public Works</span></div>
-					<div class="app-preview-tab"><calcite-icon icon="chart-magnifying-glass" scale="s"></calcite-icon></div>
 				</div>
 				<div class="app-preview-search">
 					<calcite-icon icon="magnifying-glass" scale="s"></calcite-icon>

@@ -53,19 +53,15 @@ export function initControlStyling({
 		"[role='button']",
 		"arcgis-expand",
 		"arcgis-home",
+		"arcgis-locate",
 		"arcgis-compass",
 		"arcgis-navigation-toggle",
 		"arcgis-zoom"
 	].join(",");
 
 	const CONTROL_LABEL_OVERRIDES = {
-		parcelViewerTab: "Parcel Viewer",
-		publicWorksTab: "Public Works",
-		specialAssessTab: "Property Analysis",
 		settingsBtn: "Settings",
 		helpBtn: "Help and updates",
-		helpAssistantBtn: "Open AI assistance",
-		helpTeamsBtn: "Open Microsoft Teams Parcel Viewer Development channel",
 		leftSidebarToggle: "Building list",
 		rightSidebarToggle: "Parcel information",
 		viewModeSwitch: "Toggle 2D and 3D view",
@@ -76,8 +72,7 @@ export function initControlStyling({
 		zoomOutBtn3d: "Zoom out",
 		authPrimaryBtn: "Sign In",
 		helpCloseBtn: "Close help",
-		assistantCloseBtn: "Close AI assistance",
-		helpIssueBtn: "Submit feedback or issue",
+		helpIssueBtn: "Public ticket submission coming soon",
 		openLrcFormBtnSingle: "Open split parcel request form",
 		openMergeLrcFormBtn: "Open combine parcel request form",
 		backToParcelInfoBtn: "Back to parcel information",

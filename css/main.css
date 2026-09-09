@@ -123,6 +123,7 @@ html, body {
 			height: 60px;
 			flex: 1 1 auto;
 			width: 100%;
+			padding-left: 30px;
 			padding-right: clamp(420px, 34vw, 620px);
 		}
 
@@ -380,6 +381,21 @@ html, body {
 			min-height: 0;
 		}
 
+		#page-parcel #parcelPanel {
+			flex: 1 1 auto;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+
+		#page-parcel #floorPanel {
+			flex: 0 0 auto;
+			display: flex;
+			flex-direction: column;
+			max-height: clamp(180px, 24vh, 310px);
+			min-height: 0;
+		}
+
 		.panel h3 {
 			margin: 0 0 8px 0;
 			padding-bottom: 4px;
@@ -409,6 +425,20 @@ html, body {
 			overflow-y: auto;
 			overflow-x: clip;
 			margin-top: 8px;
+		}
+
+		#page-parcel #floorList {
+			flex: 1 1 auto;
+			max-height: none;
+			min-height: 0;
+			padding-right: 4px;
+		}
+
+		#page-parcel #parcelList {
+			flex: 1 1 auto;
+			max-height: none;
+			min-height: 0;
+			padding-right: 4px;
 		}
 
 		.building-list-item,
@@ -444,6 +474,154 @@ html, body {
 			box-shadow: 0 0 10px #1c5cffaa;
 			font-weight: bold;
 			border: 1px solid var(--select-button-color);
+		}
+
+		.workflow-stage-active {
+			animation: workflowStagePulse 900ms ease-out;
+			position: relative;
+			z-index: 1;
+		}
+
+		@keyframes workflowStagePulse {
+			0% {
+				box-shadow: 0 0 0 0 rgba(28, 92, 255, 0.82), 0 0 10px #1c5cffaa;
+				border-color: rgba(143, 180, 255, 0.95);
+			}
+			55% {
+				box-shadow: 0 0 0 7px rgba(28, 92, 255, 0.16), 0 0 18px rgba(28, 92, 255, 0.58);
+				border-color: rgba(143, 180, 255, 0.9);
+			}
+			100% {
+				box-shadow: 0 0 0 12px rgba(28, 92, 255, 0), 0 0 10px #1c5cffaa;
+				border-color: #1c5cffcc;
+			}
+		}
+
+		.condo-workflow-overlay {
+			position: fixed;
+			inset: 0;
+			z-index: 1650;
+			display: grid;
+			place-items: center;
+			padding: 24px;
+			pointer-events: none;
+			background: rgba(3, 10, 22, 0.28);
+			-webkit-backdrop-filter: blur(4px) saturate(0.88);
+			backdrop-filter: blur(4px) saturate(0.88);
+			opacity: 0;
+			transition: opacity 140ms ease;
+		}
+
+		.condo-workflow-overlay[hidden] {
+			display: none !important;
+		}
+
+		.condo-workflow-overlay.visible {
+			opacity: 1;
+		}
+
+		.condo-workflow-card {
+			width: min(390px, calc(100vw - 48px));
+			padding: 16px 18px 17px;
+			border: 1px solid rgba(28, 92, 255, 0.86);
+			border-radius: 8px;
+			background:
+				linear-gradient(180deg, rgba(16, 41, 74, 0.94) 0%, rgba(10, 30, 58, 0.9) 100%),
+				rgba(10, 30, 58, 0.86);
+			box-shadow:
+				0 18px 42px rgba(0,0,0,0.46),
+				0 0 0 1px rgba(27, 89, 240, 0.38),
+				0 0 22px rgba(28,92,255,0.42);
+			color: #f7fbff;
+		}
+
+		.condo-workflow-eyebrow {
+			font-size: 11px;
+			font-weight: 800;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			color: #8fb4ff;
+		}
+
+		.condo-workflow-title {
+			margin-top: 5px;
+			font-size: 18px;
+			font-weight: 800;
+			line-height: 1.15;
+		}
+
+		.condo-workflow-subtitle {
+			min-height: 18px;
+			margin-top: 6px;
+			color: #c6d7f7;
+			font-size: 13px;
+			line-height: 1.35;
+		}
+
+		.condo-workflow-steps {
+			display: grid;
+			gap: 10px;
+			margin-top: 15px;
+		}
+
+		.condo-workflow-step {
+			display: grid;
+			grid-template-columns: 20px 1fr;
+			gap: 10px;
+			align-items: start;
+			color: rgba(231,237,247,0.62);
+		}
+
+		.condo-workflow-step > span {
+			width: 13px;
+			height: 13px;
+			margin-top: 1px;
+			border-radius: 999px;
+			border: 2px solid rgba(143, 180, 255, 0.62);
+			background: rgba(10, 30, 58, 0.95);
+			box-shadow: inset 0 0 0 2px rgba(10, 30, 58, 0.9);
+		}
+
+		.condo-workflow-step strong {
+			display: block;
+			font-size: 13px;
+			line-height: 1.1;
+		}
+
+		.condo-workflow-step small {
+			display: block;
+			min-height: 15px;
+			margin-top: 3px;
+			color: #bed1f2;
+			font-size: 12px;
+			line-height: 1.25;
+		}
+
+		.condo-workflow-step.active {
+			color: #ffffff;
+		}
+
+		.condo-workflow-step.active > span {
+			border-color: rgba(255,255,255,0.96);
+			background: #1c5cff;
+			box-shadow:
+				inset 0 0 0 2px rgba(10, 30, 58, 0.55),
+				0 0 14px rgba(28,92,255,0.78);
+			animation: condoWorkflowDotPulse 900ms ease-in-out infinite;
+		}
+
+		.condo-workflow-step.complete {
+			color: rgba(231,237,247,0.86);
+		}
+
+		.condo-workflow-step.complete > span {
+			border-color: rgba(143,180,255,0.92);
+			background: rgba(28,92,255,0.9);
+		}
+
+		@keyframes condoWorkflowDotPulse {
+			0%, 100% { transform: scale(0.88); opacity: 0.72; }
+			50% { transform: scale(1.1); opacity: 1; }
 		}
 
         arcgis-search {
@@ -975,6 +1153,61 @@ html, body {
 		.view-mode-toggle[data-mode="3d"] .view-mode-toggle-chip-3d .view-mode-toggle-icon {
 			color: #ffffff;
 		}
+
+		.condo-scene-view-toggle {
+			position: relative;
+			z-index: 60;
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
+			padding: 4px;
+			margin: 0 10px 20px 0;
+			background: rgba(10, 30, 58, 0.92);
+			border: 2px solid rgba(28, 92, 255, 0.96);
+			border-radius: 8px;
+			box-shadow:
+				0 12px 24px rgba(0, 0, 0, 0.38),
+				0 0 16px rgba(28, 92, 255, 0.38),
+				inset 0 1px 0 rgba(255, 255, 255, 0.1);
+			backdrop-filter: blur(10px);
+		}
+
+		.condo-scene-view-option {
+			appearance: none;
+			border: 1px solid rgba(143, 180, 255, 0.32);
+			border-radius: 6px;
+			background: rgba(15, 45, 85, 0.84);
+			color: rgba(232, 241, 255, 0.86);
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			min-height: 34px;
+			padding: 0 10px;
+			font: 800 12px/1 Arial, sans-serif;
+			cursor: pointer;
+			transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease;
+		}
+
+		.condo-scene-view-option calcite-icon {
+			color: currentColor;
+			--calcite-icon-color: currentColor;
+		}
+
+		.condo-scene-view-option:hover {
+			background: rgba(25, 69, 126, 0.92);
+			border-color: rgba(118, 202, 251, 0.58);
+			color: #ffffff;
+		}
+
+		.condo-scene-view-option.active {
+			background: linear-gradient(180deg, #2d70ff 0%, #1c5cff 56%, #1648c8 100%);
+			border-color: rgba(143, 205, 255, 0.82);
+			color: #ffffff;
+			box-shadow:
+				0 0 12px rgba(28, 92, 255, 0.5),
+				inset 0 1px 0 rgba(255, 255, 255, 0.28);
+		}
+
 		/* Apply to all 3 lists */
 		#buildingList, #floorList, #parcelList, #taxList {
 			scrollbar-gutter: stable;
@@ -1536,6 +1769,10 @@ html, body {
 		.map-nav-stack calcite-button {
 			border-radius: 10px;
 			box-shadow: 0 1px 4px rgba(0,0,0,0.22);
+		}
+
+		.map-locate-stack {
+			margin: 0 0 28px 8px;
 		}
 
 		arcgis-home, 
@@ -3413,6 +3650,198 @@ html, body {
 			display: none;
 		}
 
+		.app-splash-overlay {
+			position: fixed;
+			inset: 0;
+			z-index: 3000;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 24px;
+			background:
+				linear-gradient(180deg, rgba(6, 20, 39, 0.78), rgba(3, 10, 20, 0.84)),
+				rgba(5, 16, 31, 0.72);
+			-webkit-backdrop-filter: blur(11px);
+			backdrop-filter: blur(11px);
+		}
+
+		.app-splash-overlay[hidden] {
+			display: none;
+		}
+
+		.app-splash-card {
+			width: min(620px, calc(100vw - 48px));
+			padding: 28px;
+			border: 3px solid var(--accent-color);
+			border-radius: 14px;
+			background:
+				linear-gradient(180deg, rgba(15,34,63,0.98) 0%, rgba(8,19,36,0.98) 100%);
+			box-shadow:
+				0 24px 54px rgba(0, 0, 0, 0.42),
+				0 0 0 1px color-mix(in srgb, var(--accent-color) 36%, transparent),
+				0 0 34px color-mix(in srgb, var(--accent-color) 26%, transparent);
+			color: #f7fbff;
+			text-align: center;
+		}
+
+		.app-splash-brand {
+			position: relative;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			min-height: 126px;
+			margin-bottom: 16px;
+			padding: 10px 0 15px;
+			border-bottom: 2px solid color-mix(in srgb, var(--accent-color) 70%, transparent);
+		}
+
+		.app-splash-brand-logo {
+			position: absolute;
+			left: 50%;
+			top: 0;
+			transform: translateX(-50%);
+			width: 106px;
+			height: auto;
+			opacity: 0.22;
+			filter: drop-shadow(0 8px 18px rgba(0,0,0,0.22));
+			pointer-events: none;
+		}
+
+		.app-splash-brand-text {
+			position: relative;
+			z-index: 1;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 3px;
+			text-shadow: 0 2px 10px rgba(0,0,0,0.34);
+		}
+
+		.app-splash-welcome {
+			color: #dce8ff;
+			font-size: 12px;
+			font-weight: 900;
+			letter-spacing: 0.45px;
+			text-transform: uppercase;
+		}
+
+		.app-splash-card h1 {
+			margin: 0;
+			color: #ffffff;
+			font-size: clamp(30px, 4vw, 44px);
+			font-weight: 900;
+			line-height: 1.05;
+			letter-spacing: 0;
+		}
+
+		.app-splash-subtitle {
+			font-size: 19px;
+			font-style: italic;
+			font-weight: 900;
+			letter-spacing: 1.2px;
+			text-shadow: 0 0 10px color-mix(in srgb, var(--accent-color) 42%, transparent);
+		}
+
+		.app-splash-subtitle span {
+			display: block;
+			color: #2b73ff;
+		}
+
+		.app-splash-subtitle small {
+			display: block;
+			color: #dce8ff;
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 850;
+			letter-spacing: 0.4px;
+			text-transform: none;
+			vertical-align: middle;
+		}
+
+		.app-splash-card p {
+			margin: 0;
+			color: rgba(247, 251, 255, 0.88);
+			font-size: 15px;
+			line-height: 1.5;
+			text-align: left;
+		}
+
+		.app-splash-points {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 10px;
+			margin: 20px 0 22px;
+			text-align: left;
+		}
+
+		.app-splash-points div {
+			display: grid;
+			grid-template-columns: 36px 1fr;
+			column-gap: 10px;
+			align-items: center;
+			padding: 11px 12px;
+			border: 1px solid var(--panel-border-strong);
+			border-radius: 8px;
+			background: linear-gradient(180deg, rgba(21,52,95,0.82) 0%, rgba(14,32,58,0.82) 100%);
+			box-shadow:
+				inset 0 1px 0 rgba(255,255,255,0.08),
+				0 0 12px rgba(28,92,255,0.12);
+		}
+
+		.app-splash-points calcite-icon {
+			grid-row: span 2;
+			width: 34px;
+			height: 34px;
+			padding: 7px;
+			border: 1px solid color-mix(in srgb, var(--accent-color) 58%, transparent);
+			border-radius: 8px;
+			background: color-mix(in srgb, var(--accent-color) 16%, rgba(255,255,255,0.05));
+			color: #dce8ff;
+			box-sizing: border-box;
+		}
+
+		.app-splash-points strong {
+			display: block;
+			margin-bottom: 2px;
+			color: #ffffff;
+			font-size: 13px;
+			font-weight: 900;
+		}
+
+		.app-splash-points span {
+			display: block;
+			color: rgba(231, 239, 252, 0.84);
+			font-size: 12px;
+			line-height: 1.35;
+		}
+
+		.app-splash-continue {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+			min-height: 42px;
+			padding: 0 18px;
+			border: 1px solid var(--accent-color);
+			border-radius: 8px;
+			background: var(--accent-color);
+			color: #ffffff;
+			font-size: 14px;
+			font-weight: 900;
+			cursor: pointer;
+			box-shadow:
+				0 0 14px color-mix(in srgb, var(--accent-color) 30%, transparent),
+				inset 0 1px 0 rgba(255,255,255,0.15);
+		}
+
+		.app-splash-continue:hover {
+			background: #164ce0;
+			border-color: #7fa4ff;
+			box-shadow:
+				0 0 18px color-mix(in srgb, var(--accent-color) 42%, transparent),
+				inset 0 1px 0 rgba(255,255,255,0.18);
+		}
+
 		.splash-notice {
 			margin: 10px 0 14px 0;
 			padding: 12px 14px;
@@ -3750,8 +4179,8 @@ html, body {
 
 		.help-overlay-frame-shell {
 			position: relative;
-			width: 90vw;
-			height: min(90vh, calc(100vh - 48px));
+			width: min(1180px, calc(100vw - 72px));
+			height: min(74vh, 720px);
 			min-height: 0;
 			border: 2px solid var(--accent-color);
 			border-radius: 18px;
@@ -4169,7 +4598,7 @@ html, body {
 
 			.help-overlay-frame-shell {
 				width: calc(100vw - 20px);
-				height: calc(100vh - 20px);
+				height: min(86vh, calc(100vh - 20px));
 				border-radius: 14px;
 			}
 		}

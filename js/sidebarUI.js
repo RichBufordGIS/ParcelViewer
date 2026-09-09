@@ -26,35 +26,30 @@ export function initSidebarUI({
 	// ---- Private state -------------------------------------------------------
 	let leftSidebarCollapsed = true;
 	let rightSidebarCollapsed = true;
-	let sidebarResizePulseId = 0;
-	let rightSidebarResizeTimer = null;
+	let sidebarResizeTimer = null;
 	let viewportResizeTimer = null;
 
 	// ---- Resize pulse --------------------------------------------------------
 
 	function runSidebarResizePulse(durationMs = 560) {
-		const startedAt = performance.now();
+		clearTimeout(sidebarResizeTimer);
+		// Fallback for reduced motion or a sidebar whose transition is interrupted.
+		sidebarResizeTimer = setTimeout(resizeVisibleViews, durationMs);
+	}
 
-		if (sidebarResizePulseId) {
-			cancelAnimationFrame(sidebarResizePulseId);
-			sidebarResizePulseId = 0;
-		}
+	function resizeVisibleViews() {
+		clearTimeout(sidebarResizeTimer);
+		const insetActive = document.body.classList.contains("inset-3d-active");
+		const views = new Set();
+		if (document.getElementById("map2d")?.classList.contains("visible") || insetActive) views.add(getMapView());
+		if (document.getElementById("scene")?.classList.contains("visible") || insetActive) views.add(getSceneView());
+		views.forEach(view => view?.resize?.());
+	}
 
-		const step = (now) => {
-			getMapView()?.resize?.();
-			getSceneView()?.resize?.();
-
-			if (now - startedAt < durationMs) {
-				sidebarResizePulseId = requestAnimationFrame(step);
-				return;
-			}
-
-			sidebarResizePulseId = 0;
-			getMapView()?.resize?.();
-			getSceneView()?.resize?.();
-		};
-
-		sidebarResizePulseId = requestAnimationFrame(step);
+	for (const shell of [leftSidebarShell, rightSidebarShell]) {
+		shell?.addEventListener("transitionend", event => {
+			if (event.target === shell) resizeVisibleViews();
+		});
 	}
 
 	// ---- Left sidebar --------------------------------------------------------
@@ -76,6 +71,12 @@ export function initSidebarUI({
 		updateLeftSidebarState();
 	}
 
+	function closeLeftSidebar() {
+		if (leftSidebarCollapsed) return;
+		leftSidebarCollapsed = true;
+		updateLeftSidebarState();
+	}
+
 	leftSidebarToggle?.addEventListener("click", () => {
 		leftSidebarCollapsed = !leftSidebarCollapsed;
 		updateLeftSidebarState();
@@ -92,12 +93,7 @@ export function initSidebarUI({
 		rightSidebarToggle.title = "Parcel information";
 		rightSidebarToggle.setAttribute("aria-label", "Parcel information");
 
-		if (rightSidebarResizeTimer) clearTimeout(rightSidebarResizeTimer);
 		runSidebarResizePulse();
-		rightSidebarResizeTimer = setTimeout(() => {
-			getMapView()?.resize?.();
-			getSceneView()?.resize?.();
-		}, 520);
 	}
 
 	function getRightSidebarCollapsed() {
@@ -127,6 +123,7 @@ export function initSidebarUI({
 	return {
 		updateLeftSidebarState,
 		openLeftSidebar,
+		closeLeftSidebar,
 		updateRightSidebarState,
 		getRightSidebarCollapsed,
 		setRightSidebarCollapsed

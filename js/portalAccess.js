@@ -211,6 +211,7 @@ export function initPortalAccess({
 	}
 
 	function renderAuthButton() {
+		if (!userAuthBtn || !userAuthLabel || !userAuthName) return;
 		const user = appAuth.getUser();
 		const signedIn = appAuth.isSignedIn();
 		const displayName = signedIn && user ? formatAuthDisplayName(user) : "";
@@ -231,6 +232,7 @@ export function initPortalAccess({
 	// ---- Auth menu -----------------------------------------------------------
 
 	function hideUserAuthMenu() {
+		if (!userAuthMenu || !userAuthBtn) return;
 		userAuthMenu.hidden = true;
 		userAuthMenu.classList.remove("expanded");
 		userAuthMenu.style.width = "";
@@ -245,6 +247,7 @@ export function initPortalAccess({
 	}
 
 	function toggleUserAuthMenu(ACCOUNT_PAGE_EMBED_URL) {
+		if (!userAuthMenu || !userAuthBtn) return;
 		const willShow = userAuthMenu.hidden;
 		if (willShow && userAuthMenuFrame) {
 			userAuthMenuFrame.src = ACCOUNT_PAGE_EMBED_URL;
@@ -305,7 +308,7 @@ export function initPortalAccess({
 
 	async function startPortalSignIn() {
 		authPrimaryBtn.disabled = true;
-		userAuthBtn.disabled = true;
+		if (userAuthBtn) userAuthBtn.disabled = true;
 
 		try {
 			await appAuth.signIn();
@@ -320,7 +323,7 @@ export function initPortalAccess({
 			});
 		} finally {
 			authPrimaryBtn.disabled = false;
-			userAuthBtn.disabled = false;
+			if (userAuthBtn) userAuthBtn.disabled = false;
 		}
 	}
 
