@@ -1,6 +1,8 @@
 # Q3 2026 Beta Update: Parcel Search and Multi-Select Improvements
 
-Standalone page: [Q3 2026 Internal Parcel Viewer Beta Updates](../q3-2026-internal-parcel-viewer-beta-updates.html)
+Applies to the shared improvements in the [standard public viewer](../index.html) and [inset public viewer](../indexinset.html). This filename retains its internal-viewer history; the former standalone release-note page is no longer included.
+
+This release reflects collaborative work by the Jackson County GIS team. Richard Buford contributed as a project lead and team member, alongside Amy Petrillo, Gary Bindley, John Adams, Kevin Kandola, Lester Carver, and Will Buskirk, who supported planning, development, and testing. See [Credits and acknowledgments](../CREDITS.md).
 
 This release improves the Parcel Viewer workflows users touch most often: searching, selecting multiple parcels, and seeing where selected parcels are on the map.
 
@@ -34,11 +36,11 @@ Supported list formats:
 
 - Comma with no space: `29-220-16-06-00-0-00-000,51-310-06-06-00-0-00-000`
 - Comma with a space: `29-220-16-06-00-0-00-000, 51-310-06-06-00-0-00-000`
-- Semicolons or new lines
+- Semicolons, tabs, carriage returns, or new lines, including Excel cells
 - Full dashed parcel numbers
 - 17-digit parcel IDs with no dashes
 
-When the list is valid, all matching parcels are selected and the map zooms to the combined extent. Pressing Enter after pasting a valid list should not show a warning. If the list has a formatting issue, the app now shows an in-app notice instead of a browser alert.
+Blank entries and duplicate values are removed. Valid lists are processed within the 20-parcel selection limit; oversized or invalid lists display guidance. The multiline input supports Shift+Enter, and paste feedback reports matches and duplicates. Selection and map framing also depend on whether the matches use the regular parcel or condominium workflow.
 
 ## Multi-Select Map Markers
 
@@ -84,7 +86,20 @@ Single parcel selection still opens the full detail pane with:
 
 The shorter owner/TCA card layout is only for multi-select lists. Single parcel selections continue to use the full details view.
 
-## Quick Summary
+## Shared public-viewer implementation updates
+
+- Both entry points use shared search markup and map-tool templates.
+- Shared constants define service configuration and parcel limits.
+- Owner/TCA lookups use batched queries and cached results shared by selection renderers.
+- Detail queries request explicit attributes and omit geometry when it is not needed.
+- Map and scene startup runs concurrently; the public viewer can continue in 2D if the optional scene is unavailable.
+- Sidebar resizing responds to transition completion, with support for both visible inset views.
+- Search and form code use component readiness and input/completion events.
+- Calcite notifications provide feedback, and the public error helper records caught errors in the console.
+
+These notes describe source changes, not proof of publication or live security verification. Historical screenshots above illustrate the workflows and may differ from the current public interface. See the [maintenance guide](maintenance.md) for verification scope and release checks.
+
+## Workflow reminders
 
 - Search by owner name when you know the owner.
 - Paste a parcel list when you need to select several parcels at once.
