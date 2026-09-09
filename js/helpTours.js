@@ -95,11 +95,11 @@ const TOUR_DEFINITIONS = {
 		title: "Select Multiple Parcels",
 		steps: [
 			{
-				id: "open-parcel-tab",
-				target: "#parcelViewerTab",
-				title: "Open Parcel Viewer",
-				body: "Click the Parcel Viewer tab so the 2D parcel tools are available.",
-				task: "Parcel Viewer tab active",
+				id: "confirm-parcel-viewer",
+				target: "#map2d",
+				title: "Parcel Viewer",
+				body: "The public Parcel Viewer opens directly to the 2D parcel tools.",
+				task: "Parcel Viewer visible",
 				validate: () => document.getElementById("page-parcel")?.classList.contains("visible")
 			},
 			{
@@ -166,8 +166,8 @@ const TOUR_DEFINITIONS = {
 			{
 				id: "review-map-info-tabs",
 				target: "#settingsPanel",
-				title: "Review the page tabs",
-				body: "Use the Parcel, Public Works, and Property Analysis tabs to compare the loaded maps, scenes, layers, and service links.",
+				title: "Review map layer info",
+				body: "Use the map layer info panel to review public maps, scenes, layers, tables, and service links.",
 				task: "Layer info popup visible",
 				validate: () => !document.getElementById("settingsPanel")?.classList.contains("hidden")
 			}

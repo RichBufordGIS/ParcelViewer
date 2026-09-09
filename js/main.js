@@ -1,7 +1,16 @@
-﻿const [
+import { installAppShell } from "./appShell.js";
+import { APP_AUTH, MAX_SELECTED_PARCELS, SERVICE_URLS } from "./constants.js";
+import { getParcelBatchParseDetails } from "./utils.js";
+import { notifyUser } from "./errorUX.js";
+import { installMapTools } from "./mapToolFactory.js";
+installAppShell();
+installMapTools(document.getElementById("map2d"), { suffix: "2d", dimension: "2d", measurement: true, rectangle: true });
+installMapTools(document.getElementById("scene"), { suffix: "3d", dimension: "3d", measurement: true });
+const [
 	SearchSource,
 	Graphic,
 	FeatureFilter,
+	SceneFilter,
 	unionOperator,
 	simplifyOperator,
 	convexHullOperator,
@@ -15,12 +24,14 @@
 	PortalItem,
 	WebMap,
 	WebScene,
-	FeatureLayer
-	
+	FeatureLayer,
+	Polygon
+
 ]=await $arcgis.import([
 	"@arcgis/core/widgets/Search/SearchSource.js",
 	"@arcgis/core/Graphic.js",
 	"@arcgis/core/layers/support/FeatureFilter.js",
+	"@arcgis/core/layers/support/SceneFilter.js",
 	"@arcgis/core/geometry/operators/unionOperator.js",
 	"@arcgis/core/geometry/operators/simplifyOperator.js",
 	"@arcgis/core/geometry/operators/convexHullOperator.js",
@@ -35,6 +46,7 @@
 	"@arcgis/core/WebMap.js",
 	"@arcgis/core/WebScene.js",
 	"@arcgis/core/layers/FeatureLayer.js",
+	"@arcgis/core/geometry/Polygon.js",
 ]);
 
 import { initMap } from "./mapSetup.js";
@@ -139,14 +151,15 @@ export function initSpecialAssessment() {
 
 
 		const APP_AUTH_CONFIG = {
-			portalUrl: "https://jcgis.jacksongov.org/gisportal",
-			clientId: "JdWztUwhjhFsoTu1"
+			portalUrl: APP_AUTH.portalUrl,
+			clientId: APP_AUTH.clientId
 		};
-		const BUILDING_LIST_SERVICE_URL = "https://services3.arcgis.com/4LOAHoFXfea6Y3Et/ArcGIS/rest/services/Buildings/FeatureServer/88";
-		const PARCEL_INFORMATION_TABLE_URL = "https://services3.arcgis.com/4LOAHoFXfea6Y3Et/ArcGIS/rest/services/Parcel_Information/FeatureServer/0";
+		const BUILDING_LIST_SERVICE_URL = SERVICE_URLS.buildingList;
+		const PARCEL_INFORMATION_TABLE_URL = SERVICE_URLS.parcelInformationLayer;
 		const HELP_ISSUES_FORM_URL = "";
 		const HELP_PAGE_CONTEXT_STORAGE_KEY = "jcgis-help-page-context";
 		const HELP_TOUR_MESSAGE_TARGET = "jcgis-start-help-tour";
+		const PUBLIC_MODE = true;
 		const APP_BOOT_ABORT = "APP_BOOT_ABORT";
 		const preloader=createParcelPreloader(document.getElementById("preloader"));
 		preloader.setStatus("Connecting to Jackson County GIS");
@@ -154,7 +167,6 @@ export function initSpecialAssessment() {
 		{
 
 			// ---- Page + header refs
-			const parcelViewerTabBtn=document.getElementById("parcelViewerTab");
 			const publicWorksTabBtn=document.getElementById("publicWorksTab");
 			const specialAssessTabBtn=document.getElementById("specialAssessTab");
 
@@ -221,8 +233,12 @@ export function initSpecialAssessment() {
 			// ---- Parcel view elements
 			const sceneEl=document.getElementById("scene");
 			const mapEl=document.getElementById("map2d");
+			const insetMode=document.body.classList.contains("inset-mode");
 			const pwMapEl=document.getElementById("pwMap");
 			const saMapEl=document.getElementById("saMap");
+			const locateMe2d=document.getElementById("locateMe2d");
+
+			if(insetMode && viewModeToggle) viewModeToggle.hidden = true;
 
 			function dockViewModeToggleTo(containerEl)
 			{
@@ -239,6 +255,8 @@ export function initSpecialAssessment() {
 			const authPrimaryBtnIcon=document.getElementById("authPrimaryBtnIcon");
 			const authPrimaryBtnLabel=document.getElementById("authPrimaryBtnLabel");
 			const splashNotice=document.getElementById("splashNotice");
+			const appSplashOverlay=document.getElementById("appSplashOverlay");
+			const appSplashContinueBtn=document.getElementById("appSplashContinueBtn");
 			const helpBtn=document.getElementById("helpBtn");
 			const mobileHeaderMenuBtn=document.getElementById("mobileHeaderMenuBtn");
 			const mobileHeaderMenu=document.getElementById("mobileHeaderMenu");
@@ -246,7 +264,6 @@ export function initSpecialAssessment() {
 			const mobileMapInfoBtn=document.getElementById("mobileMapInfoBtn");
 			const mobileHelpBtn=document.getElementById("mobileHelpBtn");
 			const mobileAccountBtn=document.getElementById("mobileAccountBtn");
-			const mobileParcelViewerTabBtn=document.getElementById("mobileParcelViewerTabBtn");
 			const mobilePublicWorksTabBtn=document.getElementById("mobilePublicWorksTabBtn");
 			const mobileSpecialAssessTabBtn=document.getElementById("mobileSpecialAssessTabBtn");
 				const helpOverlay=document.getElementById("helpOverlay");
@@ -262,13 +279,39 @@ export function initSpecialAssessment() {
 			const userAuthTypeBadge=document.getElementById("userAuthTypeBadge");
 			const userAuthMenu=document.getElementById("userAuthMenu");
 			const userAuthMenuFrame=document.getElementById("userAuthMenuFrame");
-			const appAuth=await createPortalAuth(APP_AUTH_CONFIG);
+						const appAuth = PUBLIC_MODE
+				? {
+					isSignedIn: () => false,
+					getUser: () => null,
+					getCredential: () => null,
+					checkSignIn: async () => false,
+					signIn: async () => {},
+					signOut: async () => { window.location.reload(); }
+				}
+				: await createPortalAuth(APP_AUTH_CONFIG);
 			const ACCOUNT_PAGE_EMBED_URL = new URL("./user-account-infopage.html?embed=1", window.location.href).toString();
 			const ACCOUNT_MENU_MESSAGE_SIGNIN = "jcgis-account-signin";
 			const ACCOUNT_MENU_MESSAGE_SIGNOUT = "jcgis-account-signed-out";
 			const ACCOUNT_MENU_MESSAGE_SIZE = "jcgis-account-size";
 			let rectangleSelectionActive = false;
 			let appNoticeTimer = null;
+			let autoLocateTimer = null;
+			let autoLocateSuppressed = false;
+			let autoLocateGeneration = 0;
+
+			function hideAppSplash()
+			{
+				if (!appSplashOverlay) return;
+				appSplashOverlay.hidden = true;
+			}
+
+			appSplashContinueBtn?.addEventListener("click", hideAppSplash);
+			document.addEventListener("keydown", (event) =>
+			{
+				if (event.key === "Escape" && appSplashOverlay && !appSplashOverlay.hidden) {
+					hideAppSplash();
+				}
+			});
 
 			function showAppNotice(message, { title = "Parcel search", tone = "warning" } = {})
 			{
@@ -311,14 +354,14 @@ export function initSpecialAssessment() {
 			}
 			syncWidgetActiveStates();
 
-			const pageDefinitions=[
+			let pageDefinitions=[
 				{
 					key: "parcel",
-					buttonEl: parcelViewerTabBtn,
+					buttonEl: null,
 					pageEl: pageParcel,
 					resources: [
-						{ element: mapEl, itemId: mapEl.dataset.itemId, portalUrl: mapEl.dataset.portalUrl || APP_AUTH_CONFIG.portalUrl, title: "Parcel Viewer 2D map", resourceType: "webmap" },
-						{ element: sceneEl, itemId: sceneEl.dataset.itemId, portalUrl: sceneEl.dataset.portalUrl || APP_AUTH_CONFIG.portalUrl, title: "Parcel Viewer 3D scene", resourceType: "webscene", allowAnonymous: true }
+						{ element: mapEl, itemId: mapEl.dataset.itemId, portalUrl: mapEl.dataset.portalUrl || APP_AUTH_CONFIG.portalUrl, title: "Parcel Viewer 2D map", resourceType: "webmap", allowAnonymous: true, required: true },
+						{ element: sceneEl, itemId: sceneEl.dataset.itemId, portalUrl: sceneEl.dataset.portalUrl || APP_AUTH_CONFIG.portalUrl, title: "Parcel Viewer 3D scene", resourceType: "webscene", allowAnonymous: true, required: false }
 					]
 				},
 				{
@@ -338,6 +381,16 @@ export function initSpecialAssessment() {
 					]
 				}
 			];
+			if(PUBLIC_MODE)
+			{
+				pageDefinitions = pageDefinitions.filter(definition => definition.key === "parcel");
+				if(publicWorksTabBtn) publicWorksTabBtn.hidden = true;
+				if(specialAssessTabBtn) specialAssessTabBtn.hidden = true;
+				if(mobilePublicWorksTabBtn) mobilePublicWorksTabBtn.hidden = true;
+				if(mobileSpecialAssessTabBtn) mobileSpecialAssessTabBtn.hidden = true;
+				pagePW?.classList.remove("visible");
+				pageSA?.classList.remove("visible");
+			}
 
 
 			const portalAccessModule = initPortalAccess({
@@ -469,7 +522,6 @@ export function initSpecialAssessment() {
 					// Keep the mobile tab buttons in sync with the real header
 					// tabs (e.g. hidden/disabled state driven by access rules).
 					[
-						[mobileParcelViewerTabBtn, parcelViewerTabBtn],
 						[mobilePublicWorksTabBtn, publicWorksTabBtn],
 						[mobileSpecialAssessTabBtn, specialAssessTabBtn]
 					].forEach(([mobileBtn, realBtn]) =>
@@ -480,14 +532,6 @@ export function initSpecialAssessment() {
 					});
 				}
 				setMobileHeaderMenuOpen(opening);
-			});
-
-			mobileParcelViewerTabBtn?.addEventListener("click",(event) =>
-			{
-				event.preventDefault();
-				event.stopPropagation();
-				closeMobileHeaderMenu();
-				parcelViewerTabBtn?.click();
 			});
 
 			mobilePublicWorksTabBtn?.addEventListener("click",(event) =>
@@ -654,6 +698,11 @@ export function initSpecialAssessment() {
 			});
 			authPrimaryBtn?.addEventListener("click",async () =>
 			{
+				if(authPrimaryBtn.dataset.action === "retry")
+				{
+					window.location.reload();
+					return;
+				}
 				if(authPrimaryBtn.dataset.action === "signout")
 				{
 					await appAuth.signOut();
@@ -703,7 +752,7 @@ export function initSpecialAssessment() {
 				}
 			}
 
-			if(!hasExistingSession)
+			if(!PUBLIC_MODE && !hasExistingSession)
 			{
 				setAccessiblePages([]);
 				showAuthOverlay({
@@ -717,33 +766,44 @@ export function initSpecialAssessment() {
 			preloader.setStatus("Validating Parcel Viewer access");
 			const pageAccessResults = await validatePageAccess(pageDefinitions);
 
-			pageAccessResults
-				.filter(result => result.allowed)
-				.forEach((result) =>
-				{
-					const resources = result.resourceResults || result.resources || [];
-					resources.forEach((resource) => applyPortalItemAccess(resource.element, resource));
-				});
+			pageAccessResults.forEach((result) =>
+			{
+				const resources = result.resourceResults || result.resources || [];
+				resources
+					.filter(resource => resource.allowed)
+					.forEach((resource) => applyPortalItemAccess(resource.element, resource));
+			});
 
 			setAccessiblePages(pageAccessResults.filter(result => result.allowed).map(result => result.key));
 
-			if(!getAccessiblePageKeys().includes("parcel"))
+			const parcelAccess = pageAccessResults.find(result => result.key === "parcel");
+			const parcelResources = parcelAccess?.resourceResults || parcelAccess?.resources || [];
+			const requiredParcelResources = parcelResources.filter(resource => resource.required !== false);
+			const hasRequiredParcelAccess = requiredParcelResources.length
+				? requiredParcelResources.every(resource => resource.allowed)
+				: getAccessiblePageKeys().includes("parcel");
+
+			if(!hasRequiredParcelAccess)
 			{
-				const parcelAccess = pageAccessResults.find(result => result.key === "parcel");
-				const blockedResources = (parcelAccess?.resourceResults || parcelAccess?.resources || [])
-					?.filter(resource => !resource.allowed)
-					?.map(resource => `${resource.title || resource.itemId}: ${resource.error?.message || "access denied"}`) || [];
+				const blockedResources = requiredParcelResources
+					.filter(resource => !resource.allowed)
+					.map(resource => `${resource.title || resource.itemId}: ${resource.error?.message || "access denied"}`);
 
 				showAuthOverlay({
-					title: "No Parcel Viewer access",
+					title: "Parcel Viewer unavailable",
 					description: blockedResources.length
-						? `Signed in as ${appAuth.getUser()?.username || "unknown user"}, but these Parcel Viewer resources failed: ${blockedResources.join(" | ")}`
-						: "Your account signed in successfully, but it cannot load the secured Parcel Viewer map and scene. Share the required Portal items to this user or their groups, then try again.",
-					primaryLabel: "Sign out",
-					primaryAction: "signout"
+						? `These public Parcel Viewer resources failed: ${blockedResources.join(" | ")}`
+						: "The public Parcel Viewer web map could not be loaded.",
+					primaryLabel: "Retry",
+					primaryAction: "retry"
 				});
 				preloader.hide();
 				throw new Error(APP_BOOT_ABORT);
+			}
+
+			if(!getAccessiblePageKeys().includes("parcel"))
+			{
+				setAccessiblePages(["parcel", ...getAccessiblePageKeys()]);
 			}
 
 			hideAuthOverlay();
@@ -813,29 +873,45 @@ export function initSpecialAssessment() {
 				}
 			}
 
+			let sceneAvailable = true;
 			try
 			{
-				preloader.setStatus("Loading parcel maps in 2D and 3D");
-				await waitForInitialView(mapEl, "parcel-2d");
-				await waitForInitialView(sceneEl, "parcel-3d", { forceVisible: true });
+                preloader.setStatus("Loading parcel map and 3D scene");
+                await Promise.all([
+                    waitForInitialView(mapEl, "parcel-2d"),
+                    waitForInitialView(sceneEl, "parcel-3d", { forceVisible: true }).catch(sceneError => {
+                        sceneAvailable = false;
+                        console.warn("[init] 3D scene is unavailable; continuing with 2D map only.", sceneError);
+                        sceneEl?.classList.remove("visible");
+                        mapEl?.classList.add("visible");
+                        if (viewModeToggle) viewModeToggle.hidden = true;
+                    })
+                ]);
 			}
 			catch (initialViewError)
 			{
 				preloader.hide();
 				showAuthOverlay({
 					title: "Initial map load failed",
-					description: `${initialViewError?.message || initialViewError}. Check the console for [init] and [auth] details.`,
-					primaryLabel: "Sign out",
-					primaryAction: "signout"
+					description: `${initialViewError?.message || initialViewError}. Check the console for [init] details.`,
+					primaryLabel: "Retry",
+					primaryAction: "retry"
 				});
 				throw new Error(APP_BOOT_ABORT);
 			}
 
 			preloader.setStatus("Preparing search and parcel tools");
-			const MAX_SELECTED_PARCELS = 20;
+			// Selection limit is shared through constants.js.
 
-			const sceneView=sceneEl.view;
 			const mapView=mapEl.view;
+			const sceneView=sceneAvailable ? sceneEl.view : mapView;
+			if(insetMode)
+			{
+				mapEl?.classList.add("visible");
+				sceneEl?.classList.remove("visible");
+				document.body.classList.remove("inset-3d-active");
+				window.requestAnimationFrame(() => mapView?.resize?.());
+			}
 			let ESRILayer=null;
 			let lrmLayer2d=null;
 			let lrmLayer3d=null;
@@ -849,6 +925,96 @@ export function initSpecialAssessment() {
 			// Start in 3D
 			let activeView=mapView;
 			dockViewModeToggleTo(mapEl);
+
+			function hasSearchValue()
+			{
+				return !!String(searchEl?.value || searchEl?.searchTerm || "").trim();
+			}
+
+			function configureAutoLocateGuard()
+			{
+				if(!locateMe2d) return;
+
+				try
+				{
+					locateMe2d.view = mapView;
+					locateMe2d.goToOverride = async (view, goToParams) =>
+					{
+						if(autoLocateSuppressed || currentPage !== "parcel" || hasSearchValue()) return;
+						const target = goToParams?.target ?? goToParams;
+						const options = goToParams?.options ?? {};
+						if(target) await view.goTo(target, options);
+					};
+				}
+				catch(error)
+				{
+					console.debug("[locate] Could not install locate goTo guard.", error);
+				}
+			}
+
+			configureAutoLocateGuard();
+
+			function autoLocateOnLoad()
+			{
+				if(!locateMe2d || currentPage !== "parcel") return;
+
+				window.clearTimeout(autoLocateTimer);
+				const locateGeneration = ++autoLocateGeneration;
+				autoLocateTimer = window.setTimeout(async () =>
+				{
+					if(locateGeneration !== autoLocateGeneration) return;
+					if(autoLocateSuppressed) return;
+					if(currentPage !== "parcel") return;
+					if(hasSearchValue()) return;
+
+					try
+					{
+						configureAutoLocateGuard();
+						if(autoLocateSuppressed) return;
+						await locateMe2d.componentOnReady?.();
+						if(locateGeneration !== autoLocateGeneration) return;
+						if(autoLocateSuppressed) return;
+						if(typeof locateMe2d.locate === "function")
+						{
+							await locateMe2d.locate();
+							return;
+						}
+
+						locateMe2d.shadowRoot
+							?.querySelector("button, calcite-action, [role='button']")
+							?.click?.();
+					}
+					catch(error)
+					{
+						console.info("[locate] Auto locate unavailable or permission was denied.", error);
+					}
+				}, 900);
+			}
+
+			function suppressAutoLocate()
+			{
+				autoLocateSuppressed = true;
+				autoLocateGeneration += 1;
+				if(autoLocateTimer)
+				{
+					window.clearTimeout(autoLocateTimer);
+					autoLocateTimer = null;
+				}
+				try
+				{
+					locateMe2d?.cancelLocate?.();
+					locateMe2d?.viewModel?.cancelLocate?.();
+				}
+				catch { }
+			}
+
+			searchEl?.addEventListener("input", suppressAutoLocate);
+			searchEl?.addEventListener("paste", suppressAutoLocate);
+			searchEl?.addEventListener("keydown", suppressAutoLocate);
+			searchEl?.addEventListener("arcgisSearchStart", suppressAutoLocate);
+			for (const eventName of ["input", "paste", "keydown", "calciteTextAreaInput"]) {
+				document.getElementById("searchTextArea")?.addEventListener(eventName, suppressAutoLocate);
+			}
 
 			function showAndHide(showEl,hideEl)
 			{
@@ -957,7 +1123,7 @@ export function initSpecialAssessment() {
 
 
 
-			const { updateLeftSidebarState, openLeftSidebar, updateRightSidebarState, getRightSidebarCollapsed, setRightSidebarCollapsed } = initSidebarUI({
+			const { updateLeftSidebarState, openLeftSidebar, closeLeftSidebar, updateRightSidebarState, getRightSidebarCollapsed, setRightSidebarCollapsed } = initSidebarUI({
 				getMapView: () => mapView,
 				getSceneView: () => sceneView,
 				leftSidebarShell, leftSidebarToggle, leftSidebarToggleIcon,
@@ -977,7 +1143,7 @@ export function initSpecialAssessment() {
 					mapInfoPanel?.preloadPage?.(pageName);
 				},
 				pageParcel, pagePW, pageSA,
-				parcelViewerTabBtn, publicWorksTabBtn, specialAssessTabBtn
+				parcelViewerTabBtn: null, publicWorksTabBtn, specialAssessTabBtn
 			});
 
 
@@ -988,10 +1154,26 @@ export function initSpecialAssessment() {
 
 			function clearSearchUi()
 			{
+                const textarea = document.getElementById("searchTextArea");
+                if (textarea) textarea.value = "";
 				searchEl.value = "";
 				searchEl.searchTerm = "";
 				searchEl.close?.();
 				searchEl.blur?.();
+			}
+
+			function setSearchUiDisplay(value, title = value)
+			{
+				const displayValue = String(value || "").trim();
+				const fullTitle = String(title || displayValue).trim();
+                const textarea = document.getElementById("searchTextArea");
+                if (textarea) { textarea.value = fullTitle; textarea.title = fullTitle; }
+				searchEl.value = displayValue;
+				searchEl.searchTerm = displayValue;
+				searchEl.title = fullTitle;
+				searchEl.setAttribute("title", fullTitle);
+				searchEl.dataset.suppressSuggestions = "true";
+				searchEl.close?.();
 			}
 
 			function getCurrentSearchInputValue(event)
@@ -1139,15 +1321,15 @@ export function initSpecialAssessment() {
 			async function zoomToFeatureSet(features)
 			{
 				if (!features?.length) return;
-			
+
 				const extents = features
 					.map(f => f.geometry?.extent)
 					.filter(Boolean);
-			
+
 				if (!extents.length) return;
-			
+
 				let combined = extents[0].clone();
-			
+
 				for (let i = 1; i < extents.length; i++) {
 					combined = combined.union(extents[i]);
 				}
@@ -1177,7 +1359,7 @@ export function initSpecialAssessment() {
 					}
 					return;
 				}
-			
+
 				if (features.some(f => f.layer?.title === "Parcel Condominiums Floors")) {
 					await switchTo3D();
 					await sceneView.goTo({
@@ -1211,13 +1393,22 @@ export function initSpecialAssessment() {
 
 			async function selectMultipleParcelsFromSearch(rawInput)
 			{
-				const parsed = parseParcelBatch(rawInput);
+				suppressAutoLocate();
+                const pasteDetails = getParcelBatchParseDetails(rawInput);
+                const parsed = pasteDetails.parcels;
+                const reportPaste = (matches) => {
+                    const matchedCount = new Set(matches.map(f => getParcelDisplayName(f))).size;
+                    const duplicates = pasteDetails.duplicateCount ? ` ${pasteDetails.duplicateCount} duplicate(s) removed.` : "";
+                    notifyUser(`${matchedCount} of ${parsed.length} unique parcel numbers matched.${duplicates} Selection limit: ${MAX_SELECTED_PARCELS}.`, { title: "Parcel list", kind: matchedCount < parsed.length ? "warning" : "success" });
+                };
 				const batch = normalizeBatchParcelInput(parsed);
 
 				if (!batch.ok) {
 					showAppNotice(batch.message);
 					return;
 				}
+
+				setSearchUiDisplay(`${batch.parcels.length} parcel IDs pasted`, batch.parcels.join(", "));
 
 				const fieldName = batch.format === "dashed" ? "Name" : "parcel_id";
 				const safeValues = batch.parcels.map(v => `'${v.replace(/'/g, "''")}'`);
@@ -1228,7 +1419,36 @@ export function initSpecialAssessment() {
 
 				let features = [];
 
-				// 1. Try regular parcels first
+				if (currentPage === "parcel" && condoSearchLayer)
+				{
+					const condoRes = await condoSearchLayer.queryFeatures({
+						where,
+						outFields: ["*"],
+						returnGeometry: true
+					});
+
+					const condoFeatures = (condoRes.features || []).map(feature => {
+						try { feature.layer = feature.layer || condoSearchLayer; } catch {}
+						return feature;
+					});
+
+					if (condoFeatures.length && typeof selectBuildingFloorParcels === "function")
+					{
+						const selectedCondoBatch = await selectBuildingFloorParcels(condoFeatures);
+						if (selectedCondoBatch)
+						{
+							reportPaste(condoFeatures);
+							syncSearchBarWithSelectedParcels();
+							searchEl.close?.();
+							searchEl.blur?.();
+							return;
+						}
+					}
+
+					features = condoFeatures;
+				}
+
+				// Regular 2D parcels, or fallback when the condo workflow cannot match the batch.
 				if (parcelSearchLayer)
 				{
 					const parcelRes = await parcelSearchLayer.queryFeatures({
@@ -1237,19 +1457,12 @@ export function initSpecialAssessment() {
 						returnGeometry: true
 					});
 
-					features = parcelRes.features || [];
-				}
-
-				// 2. If none found, try condos/floors
-				if (!features.length && condoSearchLayer)
-				{
-					const condoRes = await condoSearchLayer.queryFeatures({
-						where,
-						outFields: ["*"],
-						returnGeometry: true
+					const parcelFeatures = (parcelRes.features || []).map(feature => {
+						try { feature.layer = feature.layer || parcelSearchLayer; } catch {}
+						return feature;
 					});
 
-					features = condoRes.features || [];
+					if (parcelFeatures.length) features = parcelFeatures;
 				}
 
 				if (!features.length)
@@ -1274,7 +1487,7 @@ export function initSpecialAssessment() {
 				}
 
 				// limit total selected to 20
-				const remaining = 20 - getSelectedParcels().length;
+				const remaining = MAX_SELECTED_PARCELS - getSelectedParcels().length;
 				if (remaining <= 0)
 				{
 					showAppNotice("You can only have up to 20 selected parcels.");
@@ -1292,6 +1505,7 @@ export function initSpecialAssessment() {
 					}
 				}
 
+				reportPaste(features);
 				syncSearchBarWithSelectedParcels();
 			}
 
@@ -1299,7 +1513,8 @@ export function initSpecialAssessment() {
 			{
 				const value = String(rawInput || "").trim();
 				if(!value) return false;
-				if(normalizeBatchParcelInput(parsedBatch).ok) return true;
+				const normalizedBatch = normalizeBatchParcelInput(parsedBatch);
+				if(normalizedBatch.ok) return normalizedBatch.parcels.length > 1;
 				if(!(value.includes(",") || value.includes("\n") || value.includes(";"))) return false;
 
 				return parsedBatch.some(token => /^\d/.test(String(token || "").trim()));
@@ -1531,7 +1746,17 @@ export function initSpecialAssessment() {
 			// ---- 2D/3D toggle (FAB) ONLY for Parcel page
 			async function switchTo2D()
 			{
-				if(activeView===mapView) return;
+				suppressAutoLocate();
+				if(activeView===mapView)
+				{
+					if(insetMode)
+					{
+						mapEl.classList.add("visible");
+						sceneEl.classList.remove("visible");
+						document.body.classList.remove("inset-3d-active");
+					}
+					return;
+				}
 
 				const vp=activeView.viewpoint.clone();
 				const lat=vp.targetGeometry?.latitude;
@@ -1539,10 +1764,19 @@ export function initSpecialAssessment() {
 				vp.scale/=scaleFactor;
 
 				mapView.viewpoint=vp;
-				showAndHide(mapEl,sceneEl);
+				if(insetMode)
+				{
+					mapEl.classList.add("visible");
+					sceneEl.classList.remove("visible");
+					document.body.classList.remove("inset-3d-active");
+				}
+				else
+				{
+					showAndHide(mapEl,sceneEl);
+				}
 
 				activeView=mapView;
-				dockViewModeToggleTo(mapEl);
+				if(!insetMode) dockViewModeToggleTo(mapEl);
 				if(viewModeToggle) viewModeToggle.dataset.mode = "2d";
 				if(viewModeSwitch) viewModeSwitch.checked = false;
 				rectangleSelectionActive = false;
@@ -1555,7 +1789,25 @@ export function initSpecialAssessment() {
 
 			async function switchTo3D()
 			{
-				if(activeView===sceneView) return;
+				suppressAutoLocate();
+				if(!sceneAvailable)
+				{
+					if(viewModeSwitch) viewModeSwitch.checked = false;
+					showAppNotice("The 3D scene is not available for this public map yet.", { title: "3D scene", tone: "warning" });
+					return;
+				}
+				if(activeView===sceneView)
+				{
+					if(insetMode)
+					{
+						document.body.classList.add("inset-3d-active");
+						mapEl.classList.add("visible");
+						sceneEl.classList.add("visible");
+						sceneView.resize?.();
+						mapView.resize?.();
+					}
+					return;
+				}
 
 				const vp=activeView.viewpoint.clone();
 				const lat=vp.targetGeometry?.latitude;
@@ -1563,10 +1815,21 @@ export function initSpecialAssessment() {
 				vp.scale*=scaleFactor;
 
 				sceneView.viewpoint=vp;
-				showAndHide(sceneEl,mapEl);
+				if(insetMode)
+				{
+					document.body.classList.add("inset-3d-active");
+					mapEl.classList.add("visible");
+					sceneEl.classList.add("visible");
+					sceneView.resize?.();
+					mapView.resize?.();
+				}
+				else
+				{
+					showAndHide(sceneEl,mapEl);
+				}
 
 				activeView=sceneView;
-				dockViewModeToggleTo(sceneEl);
+				if(!insetMode) dockViewModeToggleTo(sceneEl);
 				if(viewModeToggle) viewModeToggle.dataset.mode = "3d";
 				if(viewModeSwitch) viewModeSwitch.checked = true;
 				rectangleSelectionActive = false;
@@ -1638,7 +1901,7 @@ export function initSpecialAssessment() {
 
 			// ---- Search Controller
 			let searchController = null;
-			
+
 
 
 			// ---- LayerViews
@@ -1648,6 +1911,23 @@ export function initSpecialAssessment() {
 
 			async function refreshLayerRefs()
 			{
+				const hidden2DLayerTitles = new Set([
+					"County Boundary",
+					"Kansas City",
+					"Major Cities",
+					"Missouri",
+					"Jackson County Mask"
+				]);
+
+				function applyLayerListVisibility(layer)
+				{
+					if (!layer) return;
+					if (hidden2DLayerTitles.has(layer.title)) {
+						layer.listMode = "hide";
+					}
+					layer.layers?.forEach?.(applyLayerListVisibility);
+				}
+
 				async function loadOptionalLayer(layer)
 				{
 					if(!layer) return false;
@@ -1663,18 +1943,39 @@ export function initSpecialAssessment() {
 					}
 				}
 
-				condoLayer=sceneView.map?.allLayers?.find(l => l.title==="Parcel Condominiums")||null;
-				floorLayer=sceneView.map?.allLayers?.find(l => l.title==="Parcel Condominiums Floors")||null;
-				ESRILayer=sceneView.map?.allLayers?.find(l => l.title==="Esri 3D Buildings")||null;
-				regularParcelLayer=mapView.map?.allLayers?.find(l => l.title==="Parcels")||null;
-				lrcRequestLayer = mapView.map?.allLayers?.find(l => l.title === "Land Records Change Request") || null;
+				function findLayerByTitle(map, title)
+				{
+					const target = String(title || "").trim().toLowerCase();
+					return map?.allLayers?.find?.((layer) =>
+						String(layer?.title || "").trim().toLowerCase() === target
+					) || null;
+				}
 
-				KansasCityLayer=sceneView.map?.allLayers?.find(l => l.title==="Kansas City")||null;
-				MissouriLayer=sceneView.map?.allLayers?.find(l => l.title==="Missouri")||null;
-				MajorCitiesLayer=sceneView.map?.allLayers?.find(l => l.title==="Major Cities")||null;
-				JacksonCountyMaskLayer=sceneView.map?.allLayers?.find(l => l.title==="Jackson County Mask")||null;
-				addressLayer2d=mapView.map?.allLayers?.find(l => l.title==="Addresses")||null;
-				addressLayer3d=sceneView.map?.allLayers?.find(l => l.title==="Addresses")||null;
+				condoLayer=findLayerByTitle(sceneView.map, "Parcel Condominiums");
+				floorLayer=findLayerByTitle(sceneView.map, "Parcel Condominiums Floors");
+				ESRILayer=findLayerByTitle(sceneView.map, "Esri 3D Buildings");
+				if (ESRILayer) {
+					ESRILayer.visible = true;
+					ESRILayer.opacity = 1;
+					if ("filter" in ESRILayer) ESRILayer.filter = null;
+				}
+				console.debug("Resolved Esri 3D Buildings layer.", {
+					found: !!ESRILayer,
+					title: ESRILayer?.title,
+					type: ESRILayer?.type,
+					url: ESRILayer?.url,
+					portalItemId: ESRILayer?.portalItem?.id
+				});
+				regularParcelLayer=findLayerByTitle(mapView.map, "Parcels");
+				lrcRequestLayer = findLayerByTitle(mapView.map, "Land Records Change Request");
+				mapView.map?.allLayers?.forEach?.(applyLayerListVisibility);
+
+				KansasCityLayer=findLayerByTitle(sceneView.map, "Kansas City");
+				MissouriLayer=findLayerByTitle(sceneView.map, "Missouri");
+				MajorCitiesLayer=findLayerByTitle(sceneView.map, "Major Cities");
+				JacksonCountyMaskLayer=findLayerByTitle(sceneView.map, "Jackson County Mask");
+				addressLayer2d=findLayerByTitle(mapView.map, "Addresses");
+				addressLayer3d=findLayerByTitle(sceneView.map, "Addresses");
 
 				floorLayer = floorLayer || condoLayer;
 
@@ -1695,20 +1996,11 @@ export function initSpecialAssessment() {
 				await loadOptionalLayer(addressLayer2d);
 				await loadOptionalLayer(addressLayer3d);
 
-				[KansasCityLayer,MissouriLayer, MajorCitiesLayer,JacksonCountyMaskLayer,ESRILayer].forEach(layer =>
-				{
-					if(layer && layer !== condoLayer && layer !== floorLayer)
-					{
-						layer.listMode="hide";
-					}
-				});
-
 				await loadOptionalLayer(condoLayer);
 				await loadOptionalLayer(floorLayer);
 				[condoLayer, floorLayer].forEach(layer =>
 				{
 					if (!layer) return;
-					layer.listMode = "show";
 					layer.outFields = ["*"];
 				});
 				if(regularParcelLayer) await regularParcelLayer.load();
@@ -1857,6 +2149,7 @@ export function initSpecialAssessment() {
 
 			async function wireSearchEnterBehavior()
 			{
+                if (document.getElementById("searchTextArea")) return;
 				await searchEl.componentOnReady?.();
 
 				if (searchEl.dataset.enterWired === "true") return;
@@ -1948,16 +2241,20 @@ export function initSpecialAssessment() {
 				parcelListEl, selectedParcelContent2d, selectedParcelContent3d, selectedParcelBadge2d, selectedParcelBadge3d
 			});
 			const { getSelectedParcels, toggleParcelSelection, selectFeaturesByRectangle, clearSelectedParcels,
-					clearHighlightsAndSets, removeSelectedParcelByKey, getTylerDataByParcel,
+					clearHighlightsAndSets, removeSelectedParcelByKey, getTylerDataByParcel, getTylerDataByParcels,
 					getHighlightLayerViewForFeature, syncParcelListSelection, updateSelectedParcelBadge } = parcelSelectionModule;
 
 			let selectedParcelUIModule;
+			let resetBuildingSelectionPanel = null;
 			selectedParcelUIModule = initSelectedParcelUI({
 				getSelectedParcels, removeSelectedParcelByKey, clearSelectedParcels, clearHighlightsAndSets,
-				syncParcelListSelection, updateSelectedParcelBadge, getTylerDataByParcel,
+				syncParcelListSelection, updateSelectedParcelBadge, getTylerDataByParcel, getTylerDataByParcels,
 				onSelectedParcelHover: flashSelectedParcelFeature,
 				onSelectedParcelHoverEnd: clearParcelFocusGraphic,
 				onSelectedParcelRowClick: zoomToSelectedParcelFeature,
+				onSelectionCleared: async () => {
+					await resetBuildingSelectionPanel?.({ closeSidebar: true, switchTo2DOnly: true });
+				},
 				clearOwnerParcelLocationPoints,
 				refreshOwnerParcelLocationPoints,
 				refreshOwnerParcelLocationPointsAndZoom,
@@ -1971,7 +2268,7 @@ export function initSpecialAssessment() {
 			});
 			const { updateSelectedPanel, openSelectedParcelPanel, closeSelectedParcelPanel, clearAllSelectedParcels, syncSearchBarWithSelectedParcels } = selectedParcelUIModule;
 
-			const { populateBuildingList, attachViewClickHandler, selectBuildingFloorParcel } = initBuildingSelection({
+			const buildingSelectionModule = initBuildingSelection({
 				getCondoLayer: () => condoLayer,
 				getFloorLayer: () => floorLayer,
 				getESRILayer: () => ESRILayer,
@@ -1980,11 +2277,14 @@ export function initSpecialAssessment() {
 				getSceneView: () => sceneView,
 				FeatureLayerClass: FeatureLayer,
 				buildingListServiceUrl: BUILDING_LIST_SERVICE_URL,
-				switchTo3D, toggleParcelSelection,
-				clearHighlightsAndSets, clearSelectedParcels, clearAllSelectedParcels, syncParcelListSelection, openLeftSidebar,
-				getCurrentPage: () => currentPage, FeatureFilter,
+				switchTo3D, switchTo2D, toggleParcelSelection,
+				clearHighlightsAndSets, clearSelectedParcels, clearAllSelectedParcels, syncParcelListSelection, openLeftSidebar, closeLeftSidebar,
+				getCurrentPage: () => currentPage, FeatureFilter, SceneFilter, projectOperator,
+				PolygonClass: Polygon, GraphicClass: Graphic,
 				buildingListEl, floorListEl, parcelListEl, buildingSearchEl, parcelSearchEl
 			});
+			const { populateBuildingList, attachViewClickHandler, selectBuildingFloorParcel, selectBuildingFloorParcels } = buildingSelectionModule;
+			resetBuildingSelectionPanel = buildingSelectionModule.resetBuildingSelectionPanel;
 			attachViewClickHandler(sceneView);
 			attachViewClickHandler(mapView);
 			leftSidebarToggle?.addEventListener("click", () => {
@@ -2033,6 +2333,7 @@ export function initSpecialAssessment() {
 			switchTo3D,
 			toggleParcelSelection,
 			selectBuildingFloorParcel,
+			selectMultipleParcelsFromSearch,
 			syncSearchBarWithSelectedParcels,
 			addOwnerParcelLocationPoints,
 			clearOwnerParcelLocationPoints,
@@ -2053,17 +2354,13 @@ export function initSpecialAssessment() {
 			await wireSearchEnterBehavior();
 			const initialPage = getAccessiblePageKeys().includes("parcel") ? "parcel" : getAccessiblePageKeys()[0];
 			await switchPage(initialPage);
-			
+
 			window.clearAllSelectedParcels = clearAllSelectedParcels;
 			//window.launchSurvey = launchSurvey;
 
 			updateLeftSidebarState();
 			updateRightSidebarState();
 			preloader.hide();
-			const scheduleBuildingListLoad = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 1200));
-			scheduleBuildingListLoad(() => {
-				void populateBuildingList();
-			});
 			const scheduleMapInfoPreload = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 1800));
 			scheduleMapInfoPreload(() => {
 				mapInfoPanel?.preloadAllPages?.();
@@ -2212,9 +2509,9 @@ export function initSpecialAssessment() {
 	"#measurementExpand2d calcite-panel",
 	"#rectangleSelectExpand2d calcite-panel",
 	"#basemapExpandPw calcite-panel",
-  	"#layerListExpandPw calcite-panel",
+	"#layerListExpandPw calcite-panel",
 	"#basemapExpandAnalysis calcite-panel",
-  	"#layerListExpandAnalysis calcite-panel",
+	"#layerListExpandAnalysis calcite-panel",
 	"#basemapExpand3d calcite-panel",
 	"#layerListExpand3d calcite-panel",
 	"#measurementExpand3d calcite-panel"

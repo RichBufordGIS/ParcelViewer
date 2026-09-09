@@ -1,3 +1,5 @@
+import { FIELDS } from "./constants.js";
+import { logCaughtError } from "./errorUX.js";
 // Parcel selection, highlighting, Tyler data lookup, and rectangle query extracted from main.js.
 // Call initParcelSelection(refs) after layers and layer-views are ready.
 // Returns { toggleParcelSelection, selectFeaturesByRectangle, clearSelectedParcels,
@@ -55,6 +57,15 @@ export function initParcelSelection({
 		return selectedParcels;
 	}
 
+	function dispatchSelectionState() {
+		window.dispatchEvent(new CustomEvent("parcelviewer:selected-parcels-changed", {
+			detail: {
+				count: selectedParcels.length,
+				hasCondoSelection: selectedParcels.some(isCondo3DParcel)
+			}
+		}));
+	}
+
 	// ---- Highlight helpers ---------------------------------------------------
 
 	function getHighlightLayerViewForFeature(feature) {
@@ -79,6 +90,7 @@ export function initParcelSelection({
 			highlightedParcels.delete(selectionKey);
 		}
 
+		dispatchSelectionState();
 		return true;
 	}
 
@@ -89,6 +101,7 @@ export function initParcelSelection({
 		if (selectedParcelContent3d) selectedParcelContent3d.innerHTML = "";
 
 		updateSelectedParcelBadge();
+		dispatchSelectionState();
 	}
 
 	function clearHighlightsAndSets() {
@@ -143,57 +156,146 @@ export function initParcelSelection({
 	}
 
 	// ---- Tyler data lookup --------------------------------------------------
-
-	async function getTylerDataByParcel(parcelNumber) {
-		const parid = normalizeParcelForTyler(parcelNumber);
-		const fallback = {
-			ownerName: "Could not be found",
-			taxDistrict: "Could not be found"
-		};
-
-		if (!parid) return fallback;
-		if (tylerLookupCache.has(parid)) return tylerLookupCache.get(parid);
-
-		const tylerExtractTable = getTylerExtractTable();
-		if (!tylerExtractTable) return fallback;
-
-		try {
-			const q = tylerExtractTable.createQuery();
-			q.where = `PARID = '${parid.replace(/'/g, "''")}'`;
-			q.outFields = ["PARID", "TAXYR", "OWNER_NAMES", "TAXDIST"];
-			q.orderByFields = ["TAXYR DESC"];
-			q.num = 1;
-			q.returnGeometry = false;
-
-			const result = await tylerExtractTable.queryFeatures(q);
-			const attrs = result.features?.[0]?.attributes || {};
-
-			// Field names may come back upper- or lower-cased depending on the service.
-			const ownerNamesRaw = attrs.OWNER_NAMES ?? attrs.owner_names ?? null;
-			const ownRaw1 = attrs.OWN1 ?? attrs.own1 ?? null;
-			const ownRaw2 = attrs.OWN2 ?? attrs.own2 ?? null;
-			const taxdistRaw = attrs.TAXDIST ?? attrs.taxdist ?? null;
-
-			const ownerName =
-				String(ownerNamesRaw || "").replace(/(?:\s*,\s*)+$/g, "").trim() ||
-				[ownRaw1, ownRaw2]
-					.filter((v) => v != null && String(v).trim() !== "")
-					.join(" ") ||
-				"Could not be found";
-
-			const data = {
-				ownerName,
-				taxDistrict: taxdistRaw || "Could not be found"
-			};
-
-			tylerLookupCache.set(parid, data);
-			return data;
-		} catch {
-			return fallback;
-		}
-	}
-
-	// ---- Toggle selection ----------------------------------------------------
+    const TYLER_FALLBACK = Object.freeze({
+        ownerName: "Could not be found",
+        taxDistrict: "Could not be found"
+    });
+    /** Builds tyler data. */
+    function buildTylerData(attrs = {}) {
+        // Field names may come back upper- or lower-cased depending on the service.
+        const ownerNamesRaw = attrs[FIELDS.ownerNames] ?? attrs[FIELDS.ownerNamesLower] ?? null;
+        const ownRaw1 = attrs[FIELDS.owner1] ?? attrs[FIELDS.owner1Lower] ?? null;
+        const ownRaw2 = attrs[FIELDS.owner2] ?? attrs[FIELDS.owner2Lower] ?? null;
+        const taxdistRaw = attrs[FIELDS.taxDistrict] ?? attrs[FIELDS.taxDistrictLower] ?? null;
+        const ownerName = String(ownerNamesRaw || "").replace(/(?:\s*,\s*)+$/g, "").trim() ||
+            [ownRaw1, ownRaw2]
+                .filter((v) => v != null && String(v).trim() !== "")
+                .join(" ") ||
+            "Could not be found";
+        return {
+            ownerName,
+            taxDistrict: taxdistRaw || "Could not be found"
+        };
+    }
+    /** Returns tyler tax year. */
+    function getTylerTaxYear(attrs = {}) {
+        const value = attrs[FIELDS.taxYear] ?? attrs[String(FIELDS.taxYear).toLowerCase()] ?? null;
+        const numeric = Number(value);
+        return Number.isFinite(numeric) ? numeric : String(value ?? "");
+    }
+    /** Determines whether newer tyler record. */
+    function isNewerTylerRecord(candidateAttrs, currentAttrs) {
+        if (!currentAttrs)
+            return true;
+        const candidate = getTylerTaxYear(candidateAttrs);
+        const current = getTylerTaxYear(currentAttrs);
+        if (typeof candidate === "number" && typeof current === "number")
+            return candidate > current;
+        return String(candidate).localeCompare(String(current), undefined, { numeric: true }) > 0;
+    }
+    /**
+     * Resolve Tyler owner/TCA information for a parcel selection in one service query.
+     * Results are keyed by normalized PARID. Cached rows are reused and only cache misses
+     * are included in the batched WHERE ... IN (...) request.
+     */
+    async function getTylerDataByParcels(parcelNumbers = []) {
+        const parids = [...new Set(parcelNumbers
+                .map(normalizeParcelForTyler)
+                .filter(Boolean))];
+        const resultByParid = new Map();
+        const missingParids = [];
+        for (const parid of parids) {
+            if (tylerLookupCache.has(parid)) {
+                resultByParid.set(parid, tylerLookupCache.get(parid));
+            }
+            else {
+                missingParids.push(parid);
+            }
+        }
+        if (missingParids.length === 0)
+            return resultByParid;
+        const tylerExtractTable = getTylerExtractTable();
+        if (!tylerExtractTable) {
+            for (const parid of missingParids)
+                resultByParid.set(parid, TYLER_FALLBACK);
+            return resultByParid;
+        }
+        try {
+            // Resolve the service's actual field names before building the batch query.
+            // ArcGIS rejects a query when outFields contains even one field that does not
+            // exist, so optional owner fallbacks (OWN1/OWN2) must only be requested when
+            // the Tyler table actually exposes them.
+            await tylerExtractTable.load?.();
+            const fields = Array.isArray(tylerExtractTable.fields) ? tylerExtractTable.fields : [];
+            /** Returns the exact service field name for the first matching candidate. */
+            const actualFieldName = (...candidates) => {
+                for (const candidate of candidates) {
+                    const match = fields.find((field) =>
+                        String(field?.name || "").toLowerCase() === String(candidate || "").toLowerCase());
+                    if (match?.name)
+                        return match.name;
+                }
+                return null;
+            };
+            const paridField = actualFieldName(FIELDS.parid, FIELDS.paridLower);
+            if (!paridField)
+                throw new Error("Tyler parcel table does not expose a PARID field.");
+            const taxYearField = actualFieldName(FIELDS.taxYear);
+            const ownerNamesField = actualFieldName(FIELDS.ownerNames, FIELDS.ownerNamesLower);
+            const owner1Field = actualFieldName(FIELDS.owner1, FIELDS.owner1Lower);
+            const owner2Field = actualFieldName(FIELDS.owner2, FIELDS.owner2Lower);
+            const taxDistrictField = actualFieldName(FIELDS.taxDistrict, FIELDS.taxDistrictLower);
+            const q = tylerExtractTable.createQuery();
+            q.where = `${paridField} IN (${missingParids
+                .map((parid) => `'${parid.replace(/'/g, "''")}'`)
+                .join(",")})`;
+            q.outFields = [
+                paridField,
+                taxYearField,
+                ownerNamesField,
+                owner1Field,
+                owner2Field,
+                taxDistrictField
+            ].filter(Boolean);
+            q.returnGeometry = false;
+            const { features = [] } = await tylerExtractTable.queryFeatures(q);
+            const newestFeatureByParid = new Map();
+            // A PARID can have multiple TAXYR records. Reduce the single result set to the
+            // newest tax year for each parcel instead of relying on a global query order.
+            for (const feature of features) {
+                const attrs = feature?.attributes || {};
+                const rawParid = attrs[paridField] ?? attrs[FIELDS.parid] ?? attrs[FIELDS.paridLower] ?? "";
+                const parid = normalizeParcelForTyler(rawParid);
+                if (!parid)
+                    continue;
+                const current = newestFeatureByParid.get(parid);
+                if (!current || isNewerTylerRecord(attrs, current.attributes || {})) {
+                    newestFeatureByParid.set(parid, feature);
+                }
+            }
+            for (const parid of missingParids) {
+                const feature = newestFeatureByParid.get(parid);
+                const data = feature ? buildTylerData(feature.attributes || {}) : TYLER_FALLBACK;
+                tylerLookupCache.set(parid, data);
+                resultByParid.set(parid, data);
+            }
+        }
+        catch (error) {
+            logCaughtError("parcelSelection.js: batched Tyler lookup failed", error);
+            for (const parid of missingParids)
+                resultByParid.set(parid, TYLER_FALLBACK);
+        }
+        return resultByParid;
+    }
+    /** Returns tyler data by parcel. */
+    async function getTylerDataByParcel(parcelNumber) {
+        const parid = normalizeParcelForTyler(parcelNumber);
+        if (!parid)
+            return TYLER_FALLBACK;
+        const resultByParid = await getTylerDataByParcels([parid]);
+        return resultByParid.get(parid) || TYLER_FALLBACK;
+    }
+    // ---- Toggle selection ----------------------------------------------------
 
 	async function toggleParcelSelection(feature) {
 		if (!feature) return;
@@ -222,6 +324,7 @@ export function initParcelSelection({
 
 		await onSelectionChanged(selectedParcels);
 		syncParcelListSelection();
+		dispatchSelectionState();
 	}
 
 	// ---- Rectangle query selection ------------------------------------------
@@ -313,6 +416,7 @@ export function initParcelSelection({
 		clearHighlightsAndSets,
 		removeSelectedParcelByKey,
 		getTylerDataByParcel,
+		getTylerDataByParcels,
 		getHighlightLayerViewForFeature,
 		syncParcelListSelection,
 		updateSelectedParcelBadge

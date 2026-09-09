@@ -1,0 +1,153 @@
+:root { --jcgis-search-text: #0a1e3a; --jcgis-search-placeholder: rgba(10,30,58,.65); --jcgis-search-surface: #10294a; --jcgis-search-inverse-text: #fff; --jcgis-search-heading: #9fe7ff; }
+        .header-search-textarea {
+            --calcite-color-border-input: transparent;
+            --calcite-input-corner-radius: 0;
+            --calcite-input-text-color: var(--jcgis-search-text);
+            --calcite-input-placeholder-text-color: var(--jcgis-search-placeholder);
+            position: relative;
+            z-index: 2;
+            display: block;
+            width: clamp(260px, 28vw, 420px);
+            min-width: 220px;
+            min-height: 40px;
+            max-height: 180px;
+            max-width: min(520px, calc(100vw - 260px));
+            overflow: auto;
+            resize: both;
+            background: #ffffff;
+            border: 2.5px solid rgba(255,255,255,0.94);
+            border-radius: 18px;
+            color: var(--jcgis-search-text);
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.35;
+        }
+
+        .header-search-textarea::part(textarea) {
+            width: 100%;
+            height: 100%;
+            min-height: 35px;
+            max-height: 176px;
+            max-width: 100%;
+            padding: 8px 12px;
+            box-sizing: border-box;
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+            color: var(--jcgis-search-text);
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.35;
+            resize: none;
+        }
+
+        .header-search-suggestions {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            z-index: 6500;
+            max-height: min(420px, calc(100vh - 90px));
+            overflow-y: auto;
+            padding: 8px;
+            border: 1px solid rgba(93,145,229,0.36);
+            border-radius: 12px;
+            background: var(--jcgis-search-surface);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.24);
+            color: var(--jcgis-search-inverse-text);
+        }
+
+        .header-search-suggestions[hidden] {
+            display: none;
+        }
+
+        .header-search-notice {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            z-index: 6600;
+            padding: 10px 12px;
+            border: 1px solid rgba(197, 121, 0, 0.42);
+            border-radius: 8px;
+            background: #fff7ed;
+            box-shadow: 0 14px 32px rgba(0,0,0,0.22);
+            color: #4f2a00;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.35;
+        }
+
+        .header-search-notice[hidden] {
+            display: none;
+        }
+
+        .header-search-notice.is-loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-color: rgba(28, 92, 255, 0.36);
+            background: #eef6ff;
+            color: #0a1e3a;
+        }
+
+        .header-search-notice.is-loading::before {
+            content: "";
+            width: 16px;
+            height: 16px;
+            flex: 0 0 auto;
+            border: 2px solid rgba(28, 92, 255, 0.22);
+            border-top-color: #1c5cff;
+            border-radius: 50%;
+            animation: search-notice-spin 780ms linear infinite;
+        }
+
+        @keyframes search-notice-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .header-search-suggestion-group + .header-search-suggestion-group {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .header-search-suggestion-heading {
+            padding: 4px 8px 6px;
+            color: var(--jcgis-search-heading);
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .header-search-suggestion-item {
+            display: block;
+            width: 100%;
+            min-height: 36px;
+            padding: 8px;
+            border: 0;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--jcgis-search-inverse-text);
+            font: inherit;
+            font-size: 14px;
+            line-height: 1.3;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .header-search-suggestion-item:hover,
+        .header-search-suggestion-item:focus-visible,
+        .header-search-suggestion-item.active {
+            background: rgba(255,255,255,0.12);
+            outline: none;
+        }
+.header-search-shell { position: relative; overflow: visible; padding: 0; border: 0; background: transparent; align-items: flex-start; }
+.header-search-proxy { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden; visibility: hidden !important; pointer-events: none; }
+.header-search-textarea { width: 100%; min-width: 0; max-width: 100%; resize: none; }
+.parcel-viewer-alert-host { position: fixed; bottom: 20px; right: 20px; z-index: 10000; max-width: calc(100vw - 40px); }
+@media (max-width: 700px) { .header-search-textarea { font-size: 16px; } }
+.legal-expand-btn { border: 0; background: transparent; color: inherit; cursor: pointer; vertical-align: middle; }
+.legal-description-value { overflow-wrap: anywhere; }

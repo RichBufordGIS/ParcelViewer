@@ -1,0 +1,1050 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Parcel Viewer Beta - 3D Inset</title>
+	<!-- Calcite + ArcGIS ESM -->
+	<script type="module" src="https://js.arcgis.com/5.0/"></script>
+	<script type="module" src="./js/mapInfoPanel.js"></script>
+
+	<link rel="stylesheet" href="./css/main.css" />
+	<link rel="stylesheet" href="./css/preloader.css" />
+	<link rel="stylesheet" href="./css/tylerPhotoViewer.css" />
+	<link rel="stylesheet" href="./css/mobile.css" />
+	<link rel="stylesheet" href="./css/search.css" />
+
+    <style>
+        #right-info {
+            background-color: #1A2B56;
+            margin: 5px;
+            font-size: 14px;
+            line-height: 1.4;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+		#basic{
+			background-color:#1A2B56;
+			color: white;
+			float: left;
+			padding: 2%;
+			border: 1px solid #1C5CFF;
+			width: 94%;
+			border-radius: 12px;
+		}
+		.col-full{
+			width: 100%;
+			float:left;
+		}
+		.col-left{
+			width: 50%;
+			float: left;
+		}
+		.col-right{
+			width: 50%;
+			float: right;
+		}
+		.col-full-left{
+			width: 30%;
+			float: left;
+		}
+		.col-full-right{
+			width: 70%;
+			float: right;
+		}
+		.col-head{
+			width: 25%;
+			float: left;
+			font-weight: bold;
+		}
+		.col-values{
+			width: 25%;
+			float: left;
+		}
+		#longLegal {
+			width: 100%;
+			float: left;
+			color: black;
+            padding: 5px;
+            margin: 5px;
+			background-color: white;
+			border: 1px solid gray;
+			height: 15%;
+			overflow: auto;
+			display: none;
+		}
+		#owners{
+			background-color:#1A2B56;
+			color: white;
+			float: left;
+			width: 100%;
+		}
+		#values{
+			background-color:#1A2B56;
+			color: white;
+			float: left;
+			padding: 2%;
+			width: 94%;
+			border: 1px solid #1C5CFF;
+			border-radius: 12px;
+		}
+
+		body.inset-mode #page-parcel #map-container {
+			position: relative;
+			overflow: hidden;
+		}
+
+		body.inset-mode #page-parcel #parcelView {
+			--inset-map-basis: 68%;
+			display: flex;
+			flex-direction: row;
+			align-items: stretch;
+			min-width: 0;
+			overflow: hidden;
+		}
+
+		body.inset-mode #page-parcel .inset-view-pane {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			min-width: 0;
+			min-height: 0;
+			background: #0a1e3a;
+			overflow: hidden;
+		}
+
+		body.inset-mode #page-parcel .inset-map-pane {
+			flex: 1 1 auto;
+		}
+
+		body.inset-mode:not(.inset-3d-active) #page-parcel .inset-map-pane {
+			display: contents;
+		}
+
+		body.inset-mode #page-parcel .inset-scene-pane {
+			flex: 1 1 auto;
+			display: none;
+			min-width: 320px;
+			border-left: 0;
+		}
+
+		body.inset-mode.inset-3d-active #page-parcel .inset-map-pane {
+			flex: 0 0 var(--inset-map-basis);
+		}
+
+		body.inset-mode.inset-3d-active #page-parcel .inset-scene-pane {
+			display: flex;
+		}
+
+		body.inset-mode #page-parcel .inset-view-heading {
+			flex: 0 0 0;
+			display: none;
+			align-items: center;
+			gap: 8px;
+			padding: 0 12px;
+			background: linear-gradient(180deg, #102d55 0%, #0a1e3a 100%);
+			border-bottom: 2px solid rgba(28, 92, 255, 0.95);
+			color: #ffffff;
+			font-size: 12px;
+			font-weight: 800;
+			letter-spacing: 0.2px;
+			text-transform: uppercase;
+			z-index: 6;
+		}
+
+		body.inset-mode.inset-3d-active #page-parcel .inset-view-heading {
+			flex-basis: 30px;
+			display: flex;
+		}
+
+		body.inset-mode #page-parcel .inset-view-heading calcite-icon {
+			color: #8fb4ff;
+			filter: drop-shadow(0 0 6px rgba(28,92,255,0.32));
+		}
+
+		body.inset-mode #page-parcel .inset-splitter {
+			flex: 0 0 10px;
+			display: none;
+			position: relative;
+			cursor: col-resize;
+			background:
+				linear-gradient(90deg, rgba(10,30,58,0.96), rgba(28,92,255,0.8), rgba(10,30,58,0.96));
+			border-left: 1px solid rgba(143,180,255,0.35);
+			border-right: 1px solid rgba(143,180,255,0.35);
+			z-index: 8;
+			touch-action: none;
+		}
+
+		body.inset-mode #page-parcel .inset-splitter::before {
+			content: "";
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 4px;
+			height: 48px;
+			border-radius: 999px;
+			background: rgba(255,255,255,0.82);
+			box-shadow:
+				-4px 0 0 rgba(255,255,255,0.28),
+				4px 0 0 rgba(255,255,255,0.28),
+				0 0 14px rgba(28,92,255,0.5);
+			transform: translate(-50%, -50%);
+		}
+
+		body.inset-mode.inset-3d-active #page-parcel .inset-splitter {
+			display: block;
+		}
+
+		body.inset-mode.inset-resizing,
+		body.inset-mode.inset-resizing * {
+			cursor: col-resize !important;
+			user-select: none !important;
+		}
+
+		body.inset-mode #page-parcel #map2d.view-element,
+		body.inset-mode #page-parcel #scene.view-element {
+			position: relative !important;
+			inset: auto !important;
+			top: auto !important;
+			left: auto !important;
+			right: auto !important;
+			bottom: auto !important;
+			width: 100% !important;
+			height: 100% !important;
+			flex: 1 1 auto;
+			min-height: 0 !important;
+			transform: none !important;
+		}
+
+		body.inset-mode #page-parcel #map2d.view-element {
+			min-width: 0;
+			display: block !important;
+			visibility: visible !important;
+			opacity: 1 !important;
+			pointer-events: auto !important;
+			z-index: 1;
+		}
+
+		body.inset-mode #page-parcel #scene.view-element {
+			min-width: 0;
+			display: none !important;
+			visibility: hidden !important;
+			opacity: 0 !important;
+			pointer-events: none !important;
+			z-index: 2;
+			border: 0;
+			border-radius: 0;
+			overflow: hidden;
+			background: #0a1e3a;
+			box-shadow: 0 0 0 1px rgba(143,180,255,0.38);
+		}
+
+		body.inset-mode #page-parcel #scene.view-element.visible,
+		body.inset-mode.inset-3d-active #page-parcel #scene.view-element {
+			display: block !important;
+			visibility: visible !important;
+			opacity: 1 !important;
+			pointer-events: auto !important;
+		}
+
+		body.inset-mode #page-parcel #scene::part(container),
+		body.inset-mode #page-parcel #map2d::part(container) {
+			width: 100%;
+			height: 100%;
+		}
+
+		body.inset-mode #page-parcel #scene .map-nav-stack {
+			transform: scale(0.88);
+			transform-origin: top left;
+		}
+
+		body.inset-mode #page-parcel .view-mode-toggle {
+			display: none !important;
+		}
+
+		body.inset-mode #page-parcel #left-sidebar-shell,
+		body.inset-mode #page-parcel #right-sidebar-shell {
+			z-index: 52;
+		}
+
+		body.inset-mode #page-parcel #right-sidebar-shell:not(.collapsed) ~ * {
+			pointer-events: auto;
+		}
+
+		@media (max-width: 1180px) {
+			body.inset-mode #page-parcel #parcelView {
+				--inset-map-basis: 64%;
+			}
+		}
+
+		@media (max-width: 760px) {
+			body.inset-mode #page-parcel #parcelView {
+				flex-direction: column;
+			}
+
+			body.inset-mode #page-parcel .inset-map-pane {
+				flex: 1 1 auto;
+			}
+
+			body.inset-mode #page-parcel .inset-scene-pane {
+				flex: 0 0 min(42vh, 360px);
+				min-width: 0;
+				min-height: 320px;
+			}
+
+			body.inset-mode #page-parcel .inset-splitter {
+				flex-basis: 10px;
+				cursor: row-resize;
+				background:
+					linear-gradient(180deg, rgba(10,30,58,0.96), rgba(28,92,255,0.8), rgba(10,30,58,0.96));
+			}
+
+			body.inset-mode #page-parcel .inset-splitter::before {
+				width: 48px;
+				height: 4px;
+				box-shadow:
+					0 -4px 0 rgba(255,255,255,0.28),
+					0 4px 0 rgba(255,255,255,0.28),
+					0 0 14px rgba(28,92,255,0.5);
+			}
+
+			body.inset-mode.inset-resizing,
+			body.inset-mode.inset-resizing * {
+				cursor: row-resize !important;
+			}
+		}
+    </style>
+</head>
+
+<body class="inset-mode">
+	<div id="preloader" aria-live="polite"></div>
+
+	<div id="appSplashOverlay" class="app-splash-overlay" role="dialog" aria-modal="true" aria-labelledby="appSplashTitle" aria-describedby="appSplashDescription">
+		<div class="app-splash-card">
+			<div class="app-splash-brand">
+				<img class="app-splash-brand-logo" src="https://jcgis.jacksongov.org/images/jackson-county-logo.png" alt="Jackson County GIS logo">
+				<div class="app-splash-brand-text">
+					<div class="app-splash-welcome">Welcome To Jackson County GIS</div>
+					<h1 id="appSplashTitle">Parcel Viewer</h1>
+					<div class="app-splash-subtitle"><span>Beta</span><small>A GIS Research Project</small></div>
+				</div>
+			</div>
+			<p id="appSplashDescription">
+				This viewer explores a more natural way to understand parcels that overlap in the same location, including condominiums and elevated property. The 3D inset helps show which building, floor, or parcel is being selected before reviewing parcel information, valuations, photos, or land-record change request options such as split and combine.
+			</p>
+			<div class="app-splash-points">
+				<div>
+					<calcite-icon icon="map" scale="m"></calcite-icon>
+					<strong>2D map first</strong>
+					<span>Use the standard parcel map for everyday parcel search and review.</span>
+				</div>
+				<div>
+					<calcite-icon icon="cube" scale="m"></calcite-icon>
+					<strong>3D when needed</strong>
+					<span>Condo and elevated parcel selections can open a 3D inset to clarify stacked property records.</span>
+				</div>
+				<div>
+					<calcite-icon icon="list-check" scale="m"></calcite-icon>
+					<strong>Step by step</strong>
+					<span>The viewer shows the building, floor, parcel, and final scene focus as the selection is prepared.</span>
+				</div>
+			</div>
+			<button id="appSplashContinueBtn" class="app-splash-continue" type="button">
+				<calcite-icon icon="sign-in" scale="s"></calcite-icon>
+				<span>Continue to Parcel Viewer</span>
+			</button>
+		</div>
+	</div>
+
+	<header>
+		<div class="header-left">
+			<img src="https://jcgis.jacksongov.org/images/largelogo.png" alt="Logo">
+			<div class="title-stack">
+				<h2>Parcel Viewer</h2>
+				<div class="subtitle">Beta</div>
+			</div>
+
+			<div class="header-search-group">
+				<div class="header-search-shell" data-ready="false">
+					<arcgis-search id="search" include-default-sources-disabled style="visibility:hidden;"></arcgis-search>
+				</div>
+				<div class="header-search-actions">
+					<button id="mobileHeaderMenuBtn" class="header-icon-btn mobile-header-menu-btn" type="button" aria-label="Open menu" title="Menu" aria-expanded="false" aria-controls="mobileHeaderMenu">
+						<calcite-icon icon="hamburger" scale="m"></calcite-icon>
+					</button>
+					<div id="mobileHeaderMenuBackdrop" class="mobile-header-menu-backdrop" hidden></div>
+					<div id="mobileHeaderMenu" class="mobile-header-menu" aria-label="Menu" hidden>
+						<button id="mobileMapInfoBtn" class="mobile-header-menu-item" type="button">
+							<calcite-icon icon="book" scale="s"></calcite-icon>
+							<span>Map Layer Info</span>
+						</button>
+						<button id="mobileHelpBtn" class="mobile-header-menu-item" type="button">
+							<calcite-icon icon="question" scale="s"></calcite-icon>
+							<span>Help</span>
+						</button>
+					</div>
+                    <button id="settingsBtn" class="header-icon-btn" type="button" aria-label="Map Layer Info">
+                        <calcite-icon icon="book" scale="m"></calcite-icon>
+                    </button>
+
+					<button id="helpBtn" class="header-icon-btn" type="button" aria-label="Help">
+						<calcite-icon icon="question" scale="m"></calcite-icon>
+					</button>
+
+				</div>
+			</div>
+		</header>
+
+	<div id="authOverlay" class="auth-overlay" hidden>
+		<div class="auth-card">
+			<div class="auth-brand">
+				<img class="auth-brand-logo" src="https://jcgis.jacksongov.org/images/jackson-county-logo.png" alt="Jackson County GIS logo">
+				<div class="auth-brand-text">
+					<div class="auth-brand-welcome">Welcome To Jackson County GIS</div>
+					<div class="auth-brand-title">Parcel Viewer</div>
+					<div class="auth-brand-subtitle">Beta</div>
+				</div>
+			</div>
+			<div id="splashNotice" class="splash-notice">
+				<div class="splash-update-eyebrow">Beta Research Project</div>
+				<div class="splash-update-title">3D Parcel Context for Overlapping Property</div>
+				<p class="splash-notice-text">
+					This beta explores a more natural way to review parcels that overlap vertically, including condos and elevated property. The 3D inset helps clarify which unit, floor, or shared property area is being selected before reviewing parcel information, valuations, photos, or starting a land record change request such as a split or combine.
+				</p>
+			</div>
+			<h3 id="authOverlayTitle" hidden>Sign In</h3>
+			<p id="authOverlayDescription" hidden></p>
+			<div class="auth-actions">
+				<button id="authPrimaryBtn" class="auth-btn primary" type="button" aria-label="Sign In">
+					<calcite-icon id="authPrimaryBtnIcon" icon="sign-in" scale="s"></calcite-icon>
+					<span id="authPrimaryBtnLabel">Sign In</span>
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="helpOverlay" class="help-overlay" hidden aria-hidden="true">
+		<div id="helpOverlayFrameShell" class="help-overlay-frame-shell" role="dialog" aria-modal="true" aria-label="Parcel Viewer help">
+			<button id="helpOverlayCloseBtn" class="help-overlay-close" type="button" aria-label="Close help" title="Close help">
+				<calcite-icon icon="x" scale="s"></calcite-icon>
+			</button>
+			<iframe id="helpOverlayFrame" class="help-overlay-frame" src="./gis-help.html?embed=1" title="Parcel Viewer help"></iframe>
+		</div>
+	</div>
+	<div id="userAuthBackdrop" class="user-auth-backdrop" hidden aria-hidden="true"></div>
+
+	<div id="settingsPanel" class="map-info-panel hidden" role="dialog" aria-modal="true" aria-label="Map layer information">
+		<div class="map-info-panel-shell">
+			<div class="map-info-panel-header">
+				<h3>Map Layer Info</h3>
+				<button id="settingsCloseBtn" class="header-icon-btn" type="button" aria-label="Close map layer information">
+					<calcite-icon icon="x" scale="s"></calcite-icon>
+				</button>
+			</div>
+			<div id="settingsTabButtons" class="map-info-tab-buttons" role="tablist" aria-label="Map pages"></div>
+			<div id="settingsContent" class="map-info-panel-content"></div>
+		</div>
+	</div>
+
+	<div id="ui-container">
+		<!-- PARCEL PAGE -->
+		<div id="page-parcel" class="app-page visible">
+			<div id="left-sidebar-shell" class="collapsed">
+			<div id="left-sidebar">
+				<div id="buildingPanel" class="panel">
+					<h3>Buildings</h3>
+					<input type="text" id="buildingSearch" placeholder="Search buildings" aria-label="Search buildings" hidden />
+					<div id="buildingList"></div>
+				</div>
+
+				<div id="floorPanel" class="panel" style="display:none;">
+					<h3>Floors</h3>
+					<div id="floorList"></div>
+				</div>
+
+				<div id="parcelPanel" class="panel" style="display:none;">
+					<h3>Parcels</h3>
+					<input type="text" id="parcelSearch" placeholder="Search parcels" aria-label="Search parcels" />
+					<div id="parcelList"></div>
+				</div>
+			</div>
+			<button id="leftSidebarToggle" title="Building list" aria-label="Building list">
+				<calcite-icon id="leftSidebarToggleIcon" icon="chevrons-left" scale="m"></calcite-icon>
+			</button>
+			</div>
+
+			<div id="parcelView" class="page-view">
+				<div id="viewModeToggle" class="view-mode-toggle" aria-label="2D / 3D view toggle">
+					<input type="checkbox" id="viewModeSwitch" class="view-toggle-input" aria-label="Toggle 2D and 3D view" />
+					<label for="viewModeSwitch" class="view-toggle" title="Toggle 2D and 3D view">
+						<span class="view-toggle-option view-toggle-opt-2d" aria-hidden="true">
+							<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+								<path d="M4 7l5-3 6 3 5-3v13l-5 3-6-3-5 3V7z"></path>
+								<path d="M9 4v13"></path>
+								<path d="M15 7v13"></path>
+							</svg>
+							<span class="view-toggle-text">2D</span>
+						</span>
+						<span class="view-toggle-option view-toggle-opt-3d" aria-hidden="true">
+							<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+								<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"></path>
+								<path d="M12 12v9"></path>
+								<path d="M12 12L4 7.5"></path>
+								<path d="M12 12l8-4.5"></path>
+							</svg>
+							<span class="view-toggle-text">3D</span>
+						</span>
+						<span class="view-toggle-thumb" aria-hidden="true"></span>
+					</label>
+				</div>
+				<div class="inset-view-pane inset-map-pane" id="mapPane">
+					<div class="inset-view-heading">
+						<calcite-icon icon="map" scale="s"></calcite-icon>
+						<span>2D Parcel Map</span>
+					</div>
+				<arcgis-map id="map2d" class="view-element visible" data-item-id="0561cabf74ff48a4af41d3130fd103d9" data-portal-url="https://jacksoncomo.maps.arcgis.com">
+
+
+
+
+
+
+
+
+					<arcgis-zoom id="mapZoom" style="display:none;"></arcgis-zoom>
+
+				<div class="map-nav-stack" slot="top-left">
+					<calcite-button id="zoomInBtn2d" appearance="solid" kind="neutral" icon-start="plus" scale="l" title="Zoom in">
+					</calcite-button>
+
+					<arcgis-home visual-scale="l"></arcgis-home>
+
+					<calcite-button  id="zoomOutBtn2d" appearance="solid" kind="neutral" icon-start="minus" scale="l" title="Zoom out">
+					</calcite-button>
+					<arcgis-compass visual-scale="l"></arcgis-compass>
+				</div>
+				<div class="map-locate-stack" slot="bottom-left">
+					<arcgis-locate id="locateMe2d" visual-scale="l" scale="5000"></arcgis-locate>
+				</div>
+				</arcgis-map>
+				</div>
+				<div id="insetSplitter" class="inset-splitter" role="separator" aria-label="Resize 2D and 3D views" aria-orientation="vertical" tabindex="0"></div>
+				<div class="inset-view-pane inset-scene-pane" id="scenePane">
+					<div class="inset-view-heading">
+						<calcite-icon icon="cube" scale="s"></calcite-icon>
+						<span>3D Condo Scene</span>
+					</div>
+				<arcgis-scene id="scene" class="view-element" data-item-id="9b73428381b349a4b62110e5cbb9b9a8" data-portal-url="https://jacksoncomo.maps.arcgis.com" environment="lighting: 'sunny'">
+
+
+
+
+					<div class="map-nav-stack" slot="top-left">
+						<calcite-button id="zoomInBtn3d" appearance="solid" kind="neutral" icon-start="plus" scale="m" title="Zoom in">
+						</calcite-button>
+					<arcgis-home visual-scale="m"></arcgis-home>
+
+					<calcite-button id="zoomOutBtn3d" appearance="solid" kind="neutral" icon-start="minus" scale="m" title="Zoom out">
+					</calcite-button>
+
+					<arcgis-navigation-toggle visual-scale="m" slot="top-left"></arcgis-navigation-toggle>
+				<arcgis-compass visual-scale="m" slot="top-left"> </arcgis-compass>
+</div>
+					<div id="condoSceneViewToggle" class="condo-scene-view-toggle" slot="bottom-right" role="group" aria-label="3D condo view mode">
+						<button type="button" class="condo-scene-view-option" data-condo-scene-view="building" title="Building view">
+							<calcite-icon icon="cube" scale="s"></calcite-icon>
+							<span>Building</span>
+						</button>
+						<button type="button" class="condo-scene-view-option active" data-condo-scene-view="floor-plan" title="Floor plan view">
+							<calcite-icon icon="layers" scale="s"></calcite-icon>
+							<span>Floor Plan</span>
+						</button>
+					</div>
+				</arcgis-scene>
+				</div>
+		</div>
+		<div id="right-sidebar-shell" class="collapsed">
+	<button id="rightSidebarToggle" title="Parcel information" aria-label="Parcel information">
+		<calcite-icon id="rightSidebarToggleIcon" icon="chevrons-left" scale="m"></calcite-icon>
+	</button>
+
+	<div id="right-sidebar">
+		<div id="rightSidebarContent" style="width:100%; height:100%;">
+
+		</div>
+	</div>
+</div>
+		</div>
+
+		<!-- PUBLIC WORKS PAGE -->
+		<div id="page-pw" class="app-page" role="tabpanel" aria-labelledby="publicWorksTab">
+			<div class="page-view">
+				<arcgis-map id="pwMap" class="view-element visible" data-item-id="b68559fd7d424da79ca4667eeca1f9eb" data-portal-url="https://jacksoncomo.maps.arcgis.com">
+					<arcgis-expand id="basemapExpandPw" slot="top-right" mode="floating" visual-scale="l" expand-icon="basemap" collapse-icon="chevrons-right">
+						<div class="map-tool-popover">
+						<calcite-panel heading="Basemaps">
+							<div class="basemap-gallery-panel">
+							<arcgis-basemap-gallery id="basemapGalleryPw"></arcgis-basemap-gallery>
+							</div>
+						</calcite-panel>
+						</div>
+					</arcgis-expand>
+
+					<arcgis-expand id="layerListExpandPw" slot="top-right" mode="floating" visual-scale="l" expand-icon="layers" collapse-icon="chevrons-right">
+						<div class="map-tool-popover">
+						<calcite-panel heading="Layer List">
+							<div>
+							<arcgis-layer-list></arcgis-layer-list>
+							</div>
+						</calcite-panel>
+						</div>
+					</arcgis-expand>
+				</arcgis-map>
+			</div>
+		</div>
+
+		<!-- PROPERTY INFORMATION PAGE -->
+		<div id="page-sa" class="app-page" role="tabpanel" aria-labelledby="specialAssessTab">
+			<div id="left-sidebar">
+				<div id="selectionPanel" class="panel">
+					<h3>Select Districts</h3>
+					<calcite-combobox
+						id="fieldBox"
+						placeholder="Select a field"
+						select-all-enabled
+						selection-display="single">
+
+						<calcite-combobox-item
+						value="select-all-cid"
+						heading="Select all CID"
+						data-target-group="cid-names">
+						</calcite-combobox-item>
+
+						<calcite-combobox-item
+						value="select-all-tdd"
+						heading="Select all TDD"
+						data-target-group="tdd-names">
+						</calcite-combobox-item>
+
+						<calcite-combobox-item
+						value="select-all-tifproj"
+						heading="Select all TIF Projects"
+						data-target-group="tifproj-names">
+						</calcite-combobox-item>
+
+						<calcite-combobox-item
+						value="select-all-tifplan"
+						heading="Select all TIF Plan Districts"
+						data-target-group="tifplan-names">
+						</calcite-combobox-item>
+
+						<calcite-combobox-item-group id="cid-names" label="CID"></calcite-combobox-item-group>
+						<calcite-combobox-item-group id="tdd-names" label="TDD"></calcite-combobox-item-group>
+						<calcite-combobox-item-group id="tifproj-names" label="TIF Projects"></calcite-combobox-item-group>
+						<calcite-combobox-item-group id="tifplan-names" label="TIF Plan District"></calcite-combobox-item-group>
+				</div>
+
+				<div id="taxPanel" class="panel">
+					<div id="taxList"></div>
+				</div>
+			</div>
+
+				<div id="taxView" class="page-view">
+				<arcgis-map id="saMap" class="visible" data-item-id="683b226c7ebf4b5baf9f7c2ae7370359" data-portal-url="https://jacksoncomo.maps.arcgis.com">
+					<arcgis-expand id="basemapExpandAnalysis" slot="top-right" mode="floating" visual-scale="l" expand-icon="basemap" collapse-icon="chevrons-right">
+						<div class="map-tool-popover">
+						<calcite-panel heading="Basemaps">
+							<div class="basemap-gallery-panel">
+							<arcgis-basemap-gallery id="basemapGalleryAnalysis"></arcgis-basemap-gallery>
+							</div>
+						</calcite-panel>
+						</div>
+					</arcgis-expand>
+
+					<arcgis-expand id="layerListExpandAnalysis" slot="top-right" mode="floating" visual-scale="l" expand-icon="layers" collapse-icon="chevrons-right">
+						<div class="map-tool-popover">
+						<calcite-panel heading="Layer List">
+							<div>
+							<arcgis-layer-list></arcgis-layer-list>
+							</div>
+						</calcite-panel>
+						</div>
+					</arcgis-expand>
+
+				</arcgis-map>
+				<arcgis-feature-table
+					id="parcelsTable"
+					class="table-container">
+				</arcgis-feature-table>
+			</div>
+		</div>
+	</div>
+	<footer id="footer">
+		&copy; 2026 - Jackson County Missouri GIS
+		<img src="https://jcgis.jacksongov.org/images/Icons/globe-glow.svg"
+			alt="Globe Icon"
+			style="width:20px; height:20px; vertical-align: text-bottom; margin-left:1px; filter: invert(70%);">
+	</footer>
+
+	<script>
+		(() => {
+			let selectedCondo2DGraphic = null;
+			let GraphicClassPromise = null;
+
+			function getGraphicClass() {
+				if (!GraphicClassPromise) {
+					GraphicClassPromise = (window.$arcgis || globalThis.$arcgis)?.import?.("@arcgis/core/Graphic.js") || Promise.resolve(null);
+				}
+				return GraphicClassPromise;
+			}
+
+			function forceSceneInsetPosition() {
+				const scene = document.getElementById("scene");
+				if (!scene) return;
+
+				[
+					"position",
+					"inset",
+					"top",
+					"left",
+					"right",
+					"bottom",
+					"width",
+					"height",
+					"min-width",
+					"min-height",
+					"display",
+					"visibility",
+					"z-index",
+					"transform-origin"
+				].forEach((property) => scene.style.removeProperty(property));
+			}
+
+			function extentToPolygon(extent) {
+				if (!extent) return null;
+
+				const xmin = extent.xmin;
+				const ymin = extent.ymin;
+				const xmax = extent.xmax;
+				const ymax = extent.ymax;
+				if (![xmin, ymin, xmax, ymax].every(Number.isFinite)) return null;
+
+				return {
+					type: "polygon",
+					rings: [[
+						[xmin, ymin],
+						[xmin, ymax],
+						[xmax, ymax],
+						[xmax, ymin],
+						[xmin, ymin]
+					]],
+					spatialReference: extent.spatialReference
+				};
+			}
+
+			function escapeSql(value) {
+				return String(value ?? "").replace(/'/g, "''");
+			}
+
+			function formatDashedParcel(digits) {
+				const value = String(digits || "").replace(/\D/g, "");
+				if (value.length !== 17) return "";
+				return value.replace(
+					/^(\d{2})(\d{3})(\d{2})(\d{2})(\d{2})(\d)(\d{2})(\d{3})$/,
+					"$1-$2-$3-$4-$5-$6-$7-$8"
+				);
+			}
+
+			function getParcelDigits(value) {
+				return String(value || "").replace(/\D/g, "");
+			}
+
+			function getFeatureParcelDigits(feature) {
+				const attrs = feature?.attributes || {};
+				return getParcelDigits(attrs.Name || attrs.parcel_id || attrs.PIN || attrs.ParcelNumber || "");
+			}
+
+			function getGeometryExtentArea(geometry) {
+				const extent = geometry?.extent || geometry;
+				return Math.max(0, extent?.width || 0) * Math.max(0, extent?.height || 0);
+			}
+
+			function buildParentParcelCandidates(detail = {}) {
+				const sourceDigits = getParcelDigits(detail.parcelId || detail.parcelName);
+				if (sourceDigits.length !== 17) return [];
+
+				const candidates = new Set();
+				candidates.add(`${sourceDigits.slice(0, 12)}00000`);
+
+				// Include a broader fallback for condo records whose floor/unit suffix is encoded differently.
+				candidates.add(`${sourceDigits.slice(0, 11)}000000`);
+
+				return [...candidates]
+					.filter((digits) => digits.length === 17 && /0{5}$/.test(digits))
+					.flatMap((digits) => [digits, formatDashedParcel(digits)].filter(Boolean));
+			}
+
+			function get2DParcelLayer(mapView) {
+				return mapView?.map?.allLayers?.find?.((layer) => layer.title === "Parcels") || null;
+			}
+
+			function layerHasField(layer, fieldName) {
+				return (layer?.fields || []).some((field) =>
+					String(field.name).toLowerCase() === String(fieldName).toLowerCase()
+				);
+			}
+
+			async function queryParent2DParcelFeature(mapView, detail, fallbackPolygon) {
+				const parcelLayer = get2DParcelLayer(mapView);
+				if (!parcelLayer?.queryFeatures) return null;
+
+				await parcelLayer.load?.();
+
+				const candidates = buildParentParcelCandidates(detail);
+				if (candidates.length) {
+					const quoted = candidates.map((value) => `'${escapeSql(value)}'`);
+					const exactClauses = [];
+					if (layerHasField(parcelLayer, "Name")) exactClauses.push(`Name IN (${quoted.join(",")})`);
+					if (layerHasField(parcelLayer, "parcel_id")) exactClauses.push(`parcel_id IN (${quoted.join(",")})`);
+
+					try {
+						const exactRes = exactClauses.length ? await parcelLayer.queryFeatures({
+								where: exactClauses.join(" OR "),
+								outFields: ["*"],
+								returnGeometry: true,
+								num: 20
+							}) : { features: [] };
+
+						const exactFeatures = exactRes.features || [];
+						if (exactFeatures.length) {
+							return exactFeatures.sort((a, b) =>
+								getGeometryExtentArea(b.geometry) - getGeometryExtentArea(a.geometry)
+							)[0];
+						}
+					} catch (error) {
+						console.warn("Parent condo parcel lookup by parcel number failed.", error);
+					}
+				}
+
+				if (!fallbackPolygon) return null;
+
+				try {
+					const spatialRes = await parcelLayer.queryFeatures({
+						geometry: fallbackPolygon,
+						spatialRelationship: "intersects",
+						outFields: ["*"],
+						returnGeometry: true,
+						num: 25
+					});
+
+					const zeroTailFeatures = (spatialRes.features || []).filter((feature) =>
+						/0{5}$/.test(getFeatureParcelDigits(feature))
+					);
+
+					return zeroTailFeatures.sort((a, b) =>
+						getGeometryExtentArea(b.geometry) - getGeometryExtentArea(a.geometry)
+					)[0] || null;
+				} catch (error) {
+					console.warn("Parent condo parcel spatial lookup failed.", error);
+					return null;
+				}
+			}
+
+			function clearSelectedCondo2DGraphic() {
+				const mapView = document.getElementById("map2d")?.view;
+				if (mapView && selectedCondo2DGraphic) {
+					mapView.graphics.remove(selectedCondo2DGraphic);
+				}
+				selectedCondo2DGraphic = null;
+			}
+
+			function hide3DInset() {
+				const scene = document.getElementById("scene");
+				const map2d = document.getElementById("map2d");
+				scene?.classList.remove("visible");
+				map2d?.classList.add("visible");
+				document.body.classList.remove("inset-3d-active");
+				clearSelectedCondo2DGraphic();
+			}
+
+			async function drawSelectedCondo2DGraphic(detail = {}) {
+				const mapView = document.getElementById("map2d")?.view;
+				if (!mapView || !detail.extent) return;
+
+				const condoPolygon = extentToPolygon(detail.extent);
+				if (!condoPolygon) return;
+
+				const parentFeature = await queryParent2DParcelFeature(mapView, detail, condoPolygon);
+				const polygon = parentFeature?.geometry || condoPolygon;
+				const graphicParcelName =
+					parentFeature?.attributes?.Name ||
+					parentFeature?.attributes?.parcel_id ||
+					detail.parcelName ||
+					"";
+
+				if (selectedCondo2DGraphic) {
+					clearSelectedCondo2DGraphic();
+				}
+
+				const graphicProperties = {
+					geometry: polygon,
+					symbol: {
+						type: "simple-fill",
+						color: [28, 92, 255, 0.34],
+						outline: {
+							color: [0, 229, 255, 1],
+							width: 3
+						}
+					},
+					attributes: {
+						parcelName: graphicParcelName
+					}
+				};
+
+				try {
+					const GraphicModule = await getGraphicClass();
+					const Graphic = GraphicModule?.default || GraphicModule;
+					selectedCondo2DGraphic = Graphic ? new Graphic(graphicProperties) : graphicProperties;
+				} catch {
+					selectedCondo2DGraphic = graphicProperties;
+				}
+
+				mapView.graphics.add(selectedCondo2DGraphic);
+
+				try {
+					await mapView.goTo({
+						target: polygon.extent?.expand?.(2) || polygon,
+						scale: 1800
+					}, {
+						duration: 450,
+						easing: "in-out-cubic"
+					});
+				} catch {
+					/* selection graphic should not block workflow */
+				}
+			}
+
+			function resizeInsetViews() {
+				document.getElementById("map2d")?.view?.resize?.();
+				document.getElementById("scene")?.view?.resize?.();
+			}
+
+			function setInsetMapBasis(percent) {
+				const parcelView = document.getElementById("parcelView");
+				if (!parcelView) return;
+
+				const clamped = Math.max(45, Math.min(82, Number(percent) || 68));
+				parcelView.style.setProperty("--inset-map-basis", `${clamped}%`);
+				window.requestAnimationFrame(resizeInsetViews);
+			}
+
+			function initInsetSplitter() {
+				const splitter = document.getElementById("insetSplitter");
+				const parcelView = document.getElementById("parcelView");
+				if (!splitter || !parcelView || splitter.dataset.wired) return;
+				splitter.dataset.wired = "true";
+
+				let dragging = false;
+
+				const updateFromPointer = (event) => {
+					if (!dragging) return;
+					const rect = parcelView.getBoundingClientRect();
+					if (!rect.width || !rect.height) return;
+
+					const isStacked = window.matchMedia("(max-width: 760px)").matches;
+					if (isStacked) {
+						return;
+					}
+
+					const percent = ((event.clientX - rect.left) / rect.width) * 100;
+					setInsetMapBasis(percent);
+				};
+
+				splitter.addEventListener("pointerdown", (event) => {
+					if (!document.body.classList.contains("inset-3d-active")) return;
+					dragging = true;
+					document.body.classList.add("inset-resizing");
+					splitter.setPointerCapture?.(event.pointerId);
+					updateFromPointer(event);
+				});
+
+				splitter.addEventListener("pointermove", updateFromPointer);
+
+				const stopDragging = (event) => {
+					if (!dragging) return;
+					dragging = false;
+					document.body.classList.remove("inset-resizing");
+					splitter.releasePointerCapture?.(event.pointerId);
+					resizeInsetViews();
+				};
+
+				splitter.addEventListener("pointerup", stopDragging);
+				splitter.addEventListener("pointercancel", stopDragging);
+
+				splitter.addEventListener("keydown", (event) => {
+					if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+					event.preventDefault();
+
+					const current = parseFloat(getComputedStyle(parcelView).getPropertyValue("--inset-map-basis")) || 68;
+					if (event.key === "Home") {
+						setInsetMapBasis(45);
+					} else if (event.key === "End") {
+						setInsetMapBasis(82);
+					} else {
+						setInsetMapBasis(current + (event.key === "ArrowRight" ? 4 : -4));
+					}
+				});
+			}
+
+			function syncInsetState() {
+				const scene = document.getElementById("scene");
+				const map2d = document.getElementById("map2d");
+				const active = scene?.classList.contains("visible") === true;
+
+				forceSceneInsetPosition();
+				document.body.classList.toggle("inset-3d-active", active);
+				if (map2d && !map2d.classList.contains("visible")) {
+					map2d.classList.add("visible");
+				}
+
+				if (active) {
+					requestAnimationFrame(() => {
+						map2d?.view?.resize?.();
+						scene?.view?.resize?.();
+					});
+				}
+			}
+
+			window.addEventListener("DOMContentLoaded", () => {
+				const scene = document.getElementById("scene");
+				const map2d = document.getElementById("map2d");
+				const observer = new MutationObserver(syncInsetState);
+
+				if (scene) observer.observe(scene, { attributes: true, attributeFilter: ["class"] });
+				if (map2d) observer.observe(map2d, { attributes: true, attributeFilter: ["class"] });
+
+				window.addEventListener("parcelviewer:condo-selection-geometry", (event) => {
+					document.getElementById("scene")?.classList.add("visible");
+					syncInsetState();
+					void drawSelectedCondo2DGraphic(event.detail || {});
+				});
+				window.addEventListener("parcelviewer:selected-parcels-changed", (event) => {
+					if (event.detail?.hasCondoSelection) return;
+					hide3DInset();
+				});
+				window.addEventListener("resize", () => {
+					forceSceneInsetPosition();
+					resizeInsetViews();
+				});
+
+				initInsetSplitter();
+				syncInsetState();
+
+			});
+		})();
+	</script>
+	<script type="module" src="./js/main.js"></script>
+</body>
+</html>

@@ -19,8 +19,8 @@
       <div class="help-page-header">
         <div>
           <div class="help-eyebrow">Jackson County GIS</div>
-          <h2>Internal Parcel Viewer Help & Updates</h2>
-          <p>Built with JavaScript, ArcGIS Maps SDK for JavaScript 5.0, and Calcite Components. This page highlights the newest workflows, key tools, and what each tab is built to do.</p>
+          <h2>Public Parcel Viewer Help</h2>
+          <p>Quick guidance for parcel search, multi-select workflows, condo review, and GIS support.</p>
         </div>
         <div class="help-page-actions">
           <button id="helpCloseBtn" class="help-action-btn close-only" type="button" aria-label="Back to Parcel Viewer">
@@ -33,9 +33,9 @@
         <div class="help-overview-card">
           <div class="help-pill">Help</div>
           <h3>GIS Help Tools</h3>
-          <p>Open support links, guided walkthroughs, and feedback options for Parcel Viewer workflows, behavior, and issues from one place.</p>
+          <p>Email GIS support for public Parcel Viewer questions. Public ticket submission will be enabled after the public ticket form is ready.</p>
           <div class="help-tool-actions">
-            <button id="helpIssueBtn" class="help-tool-action-btn issue" type="button" title="Submit a ticket" aria-label="Submit a ticket">
+            <button id="helpIssueBtn" class="help-tool-action-btn issue disabled" type="button" title="Public ticket submission coming soon" aria-label="Public ticket submission coming soon" aria-disabled="true" disabled>
               <span class="help-tool-action-media">
                 <calcite-icon icon="speech-bubbles" scale="l"></calcite-icon>
               </span>
@@ -47,40 +47,28 @@
               </span>
               <span class="help-tool-action-label">Guided<br>Walkthrough</span>
             </button>
-            <a id="helpTeamsBtn" class="help-tool-action-btn teams" href="https://teams.microsoft.com/l/channel/19%3AN0OBV1NCKDef9XC2PCdoyU9ZwuZe1LNtUrqJp0-tyZ41%40thread.skype/Parcel%20Viewer%20Development?groupId=cf428a53-76d4-477b-b0b1-64047d99bbdc&tenantId=e5a0fc19-9f8a-44f4-b992-c7fb430b6d1f&ngc=true&allowXTenantAccess=true" target="_blank" rel="noopener noreferrer" title="Open Microsoft Teams" aria-label="Open Microsoft Teams">
-              <span class="help-tool-action-media">
-                <img class="help-tool-action-icon help-tool-action-image" src="https://jcgis.jacksongov.org/images/teamslogo.png" alt="Microsoft Teams logo">
-              </span>
-              <span class="help-tool-action-label">Microsoft<br>Teams</span>
-            </a>
             <a id="helpEmailBtn" class="help-tool-action-btn email" href="mailto:gis@jacksongov.org?subject=Parcel%20Viewer%20Support" title="Email GIS support" aria-label="Email GIS support">
               <span class="help-tool-action-media">
                 <calcite-icon icon="email-address" scale="l"></calcite-icon>
               </span>
               <span class="help-tool-action-label">Email<br>GIS</span>
             </a>
-            <button id="helpAssistantBtn" class="help-tool-action-btn ai disabled" type="button" title="AI assistance coming soon" aria-label="AI assistance coming soon" aria-disabled="true">
-              <span class="help-tool-action-media">
-                <calcite-icon icon="lightbulb" scale="l"></calcite-icon>
-              </span>
-              <span class="help-tool-action-label">AI<br>Assistance</span>
-            </button>
           </div>
         </div>
         <div class="help-overview-card">
           <div class="help-pill">Platform</div>
-          <h3>Modern ArcGIS web app shell</h3>
-          <p>App-wide sign-in, Portal-backed maps and scenes, and a shared header search experience across Parcel Viewer, Public Works, and Property Analysis.</p>
+          <h3>Public ArcGIS web app</h3>
+          <p>Search parcels and addresses, review map layers, open parcel details, and move between 2D and 3D from one public viewer.</p>
         </div>
         <div class="help-overview-card">
           <div class="help-pill">What&rsquo;s New</div>
-          <h3>Selection and workflow updates</h3>
-          <p>Multi-select parcel workflows, CSV-style parcel paste search, 3D condo tools, and updated Split / Combine parcel request logic.</p>
+          <h3>Better parcel workflows</h3>
+          <p>Multi-select parcels, rectangle selection, pasted parcel lists, clearer selected-parcel details, and a guided 3D condo workflow.</p>
         </div>
         <div class="help-overview-card">
-          <div class="help-pill">Coming Next</div>
-          <h3>Guided visuals and demos</h3>
-          <p>Guided walkthroughs open from the Help tools and walk users through common workflows in the live app.</p>
+          <div class="help-pill">Why 3D</div>
+          <h3>Condos need floors</h3>
+          <p>Condo parcels can overlap in 2D, so stacked units are separated by building and floor in the 3D view.</p>
         </div>
       </div>
 
@@ -90,88 +78,54 @@
             <calcite-icon icon="parcel-layer" scale="m"></calcite-icon>
             <h3>Parcel Viewer</h3>
           </div>
-          <p>The main parcel workspace combines 2D and 3D review tools with selection, condo exploration, and parcel change request workflows.</p>
+          <p>The public parcel workspace combines map review tools with parcel search, selection, and parcel detail workflows.</p>
           <div class="help-feature-list">
             <div class="help-feature-item"><calcite-icon icon="cursor-selection" scale="s"></calcite-icon><span>Select multiple parcels at one time, including rectangle selection.</span></div>
             <div class="help-feature-item"><calcite-icon icon="file-csv" scale="s"></calcite-icon><span>Paste parcel lists using comma, semicolon, or line-separated values for batch search.</span></div>
-            <div class="help-feature-item"><calcite-icon icon="3d-glasses" scale="s"></calcite-icon><span>Open condo buildings and floors in 3D and follow parcels through floor-level workflows.</span></div>
-            <div class="help-feature-item"><calcite-icon icon="split-units" scale="s"></calcite-icon><span>Split is used for single-parcel requests. Combine is used when multiple parcels are selected.</span></div>
+            <div class="help-feature-item"><calcite-icon icon="3d-glasses" scale="s"></calcite-icon><span>Use 3D for condo buildings when stacked units make the 2D map hard to interpret.</span></div>
+            <div class="help-feature-item"><calcite-icon icon="information" scale="s"></calcite-icon><span>Open parcel details and related public property information from selected parcels.</span></div>
             <div class="help-feature-item"><calcite-icon icon="measure-area" scale="s"></calcite-icon><span>Includes area and line measurement, basemap, layer list, home, zoom, compass, and 2D / 3D navigation tools.</span></div>
           </div>
           <details class="help-details">
             <summary>View full Parcel Viewer details</summary>
             <ul class="help-detail-list">
               <li>Search can resolve parcel, condo, and address sources depending on the current Parcel Viewer context.</li>
-              <li>Condo search can move the user directly into 3D so building and floor tools line up with the selected result.</li>
-              <li>Selected parcels flow into the split / combine request logic, with single-parcel requests guarded from combine behavior.</li>
+              <li>Condo search can move the user directly into 3D when public 3D resources are available for the selected result.</li>
+              <li>Selected parcels open public parcel detail workflows without internal change request actions.</li>
               <li>The page includes dedicated map widgets for layer visibility, basemap changes, home, zoom, compass, and measurement.</li>
             </ul>
           </details>
         </section>
 
-        <section id="helpSectionSA" class="help-section-card" data-app="sa">
+        <section class="help-section-card" data-app="parcel">
           <div class="help-section-header">
-            <calcite-icon icon="chart-magnifying-glass" scale="m"></calcite-icon>
-            <h3>Property Analysis</h3>
+            <calcite-icon icon="3d-building" scale="m"></calcite-icon>
+            <h3>3D condo review</h3>
           </div>
-          <p>Property Analysis focuses on district review, selection workflows, and table-driven exploration of assessment-related layers.</p>
-          <div class="help-feature-list">
-            <div class="help-feature-item"><calcite-icon icon="selection-multiple" scale="s"></calcite-icon><span>Select multiple districts from the grouped district picker.</span></div>
-            <div class="help-feature-item"><calcite-icon icon="table" scale="s"></calcite-icon><span>Review results in the feature table tied directly to the Property Analysis map.</span></div>
-            <div class="help-feature-item"><calcite-icon icon="layer-list" scale="s"></calcite-icon><span>Use the layer list to review and compare map content while working through district selections.</span></div>
-            <div class="help-feature-item"><calcite-icon icon="magnifying-glass" scale="s"></calcite-icon><span>Shared search supports parcel, condo, and address lookups in the Property Analysis context.</span></div>
+          <p>Some condo buildings have many parcel records occupying the same footprint. In 2D those units can look like a tangled stack of overlapping parcels, so the viewer opens 3D to separate them by building and floor.</p>
+          <div class="help-feature-list compact">
+            <div class="help-feature-item"><calcite-icon icon="list" scale="s"></calcite-icon><span>Search a condo parcel or address to open the related building list entry.</span></div>
+            <div class="help-feature-item"><calcite-icon icon="organization" scale="s"></calcite-icon><span>Choose floors to filter the condo units shown in the map and parcel list.</span></div>
+            <div class="help-feature-item"><calcite-icon icon="zoom-in" scale="s"></calcite-icon><span>Select a unit to zoom and orient the 3D scene toward that parcel.</span></div>
+            <div class="help-feature-item"><calcite-icon icon="map" scale="s"></calcite-icon><span>Deselect the building to clear the building panel and return to the normal 2D parcel view.</span></div>
           </div>
-          <details class="help-details">
-            <summary>View full Property Analysis details</summary>
-            <ul class="help-detail-list">
-              <li>The district combobox is organized into CID, TDD, TIF Projects, and TIF Plan District groups.</li>
-              <li>Selections feed into the map and feature table so users can inspect both geometry and records together.</li>
-              <li>The page is set up well for future deep-dive help content or animated demos of district filtering.</li>
-            </ul>
-          </details>
         </section>
 
-        <section id="helpSectionPW" class="help-section-card" data-app="pw">
+        <section class="help-section-card" data-app="parcel">
           <div class="help-section-header">
-            <calcite-icon icon="wrench" scale="m"></calcite-icon>
-            <h3>Public Works</h3>
+            <calcite-icon icon="list" scale="m"></calcite-icon>
+            <h3>New workflow details</h3>
           </div>
-          <p>Public Works is a focused tab for map access and search, with room to grow as more PW-specific tools are added.</p>
-          <div class="help-feature-list">
-            <div class="help-feature-item"><calcite-icon icon="magnifying-glass" scale="s"></calcite-icon><span>Uses the shared search framework for parcel, condo, and address search sources.</span></div>
-            <div class="help-feature-item"><calcite-icon icon="basemap" scale="s"></calcite-icon><span>Includes map tools such as basemap access in the Public Works view.</span></div>
-            <div class="help-feature-item"><calcite-icon icon="user" scale="s"></calcite-icon><span>Visibility is tied to actual content access so only users with PW access should see this tab.</span></div>
+          <div class="help-feature-list compact">
+            <div class="help-feature-item"><calcite-icon icon="cursor-selection" scale="s"></calcite-icon><span>Selected parcels stay visible in the map and in the parcel details panel.</span></div>
+            <div class="help-feature-item"><calcite-icon icon="table" scale="s"></calcite-icon><span>Batch search accepts copied parcel lists without requiring one search at a time.</span></div>
+            <div class="help-feature-item"><calcite-icon icon="presentation" scale="s"></calcite-icon><span>Guided walkthroughs open from Help and step through common workflows in the live app.</span></div>
+            <div class="help-feature-item"><calcite-icon icon="email-address" scale="s"></calcite-icon><span>Email GIS support from this panel while public ticket submission is being prepared.</span></div>
           </div>
-          <details class="help-details">
-            <summary>View full Public Works details</summary>
-            <ul class="help-detail-list">
-              <li>The Public Works tab uses the same shared header search controller as the rest of the app, keeping search behavior consistent.</li>
-              <li>The current PW page is intentionally lighter than Parcel Viewer and can absorb more tool-specific help as new widgets are added.</li>
-            </ul>
-          </details>
         </section>
       </div>
     </div>
   </main>
-
-  <div id="aiComingSoonModal" class="help-ai-modal" hidden aria-hidden="true">
-    <div class="help-ai-modal-card" role="dialog" aria-modal="true" aria-labelledby="aiComingSoonTitle">
-      <button id="aiComingSoonCloseXBtn" class="help-ai-modal-close-x" type="button" aria-label="Close AI notice" title="Close AI notice">
-        <calcite-icon icon="x" scale="s"></calcite-icon>
-      </button>
-      <div class="help-ai-modal-hero" aria-hidden="true">
-        <span class="help-ai-modal-orb"></span>
-        <span class="help-ai-modal-ring"></span>
-        <calcite-icon icon="lightbulb" scale="l"></calcite-icon>
-      </div>
-      <div class="help-ai-modal-eyebrow">GIS Under Construction</div>
-      <h3 id="aiComingSoonTitle">Our map bots are still unfolding their topo maps.</h3>
-      <p>AI Assistance is parked in the staging yard while we wire in Esri AI tools. Come back soon and we will have smart GIS guidance ready to roll.</p>
-      <div class="help-ai-modal-actions">
-        <a class="help-ai-modal-link" href="https://www.esri.com/arcgis-blog/products/arcgis-online/geoai/whats-new-in-ai-assistants-february-2026" target="_blank" rel="noopener noreferrer">Preview Esri AI assistant</a>
-      </div>
-    </div>
-  </div>
 
   <div id="ticketTypeModal" class="help-ticket-modal" hidden aria-hidden="true">
     <div class="help-ticket-modal-card" role="dialog" aria-modal="true" aria-labelledby="ticketTypeModalTitle">

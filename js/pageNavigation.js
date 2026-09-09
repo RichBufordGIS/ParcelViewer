@@ -167,9 +167,9 @@ export function initPageNavigation({
 		pagePW.classList.toggle("visible", pageName === "pw");
 		pageSA.classList.toggle("visible", pageName === "sa");
 
-		if (pageName === "parcel") setActivePageTab(parcelViewerTabBtn);
-		if (pageName === "pw") setActivePageTab(publicWorksTabBtn);
-		if (pageName === "sa") setActivePageTab(specialAssessTabBtn);
+		if (pageName === "parcel" && parcelViewerTabBtn) setActivePageTab(parcelViewerTabBtn);
+		if (pageName === "pw" && publicWorksTabBtn) setActivePageTab(publicWorksTabBtn);
+		if (pageName === "sa" && specialAssessTabBtn) setActivePageTab(specialAssessTabBtn);
 
 		const searchController = getSearchController();
 		if (searchController) {

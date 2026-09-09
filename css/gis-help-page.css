@@ -69,7 +69,7 @@ a {
 
 html.embed-mode .help-page-shell {
   min-height: 100%;
-  padding: 0 0 16px;
+  padding: 0;
 }
 
 .help-page {
@@ -86,7 +86,7 @@ html.embed-mode .help-page-shell {
 html.embed-mode .help-page {
   width: 100%;
   margin: 0;
-  padding: 24px;
+  padding: 18px 20px 20px;
   border: 1.3px solid color-mix(in srgb, var(--accent-color) 88%, white 12%);
   border-radius: 18px;
   box-shadow: none;
@@ -101,12 +101,12 @@ html.embed-mode .help-page-actions {
   justify-content: space-between;
   align-items: flex-start;
   gap: 18px;
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 
 .help-page-header h2 {
-  margin: 4px 0 8px;
-  font-size: 29px;
+  margin: 3px 0 6px;
+  font-size: 25px;
   line-height: 1.05;
 }
 
@@ -114,7 +114,7 @@ html.embed-mode .help-page-actions {
   margin: 0;
   max-width: 700px;
   color: #c3d4f4;
-  line-height: 1.5;
+  line-height: 1.35;
 }
 
 .help-eyebrow {
@@ -174,20 +174,21 @@ html.embed-mode .help-page-actions {
 .help-overview-grid,
 .help-section-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
 }
 
 .help-overview-grid {
-  margin-bottom: 20px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 12px;
 }
 
 .help-overview-card,
 .help-section-card {
   border: 1px solid var(--panel-border-color);
-  border-radius: 18px;
+  border-radius: 12px;
   background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
-  padding: 18px;
+  padding: 14px;
 }
 
 .help-section-card[data-app="parcel"] {
@@ -207,27 +208,28 @@ html.embed-mode .help-page-actions {
 
 .help-overview-card h3,
 .help-section-card h3 {
-  margin: 0 0 8px;
-  font-size: 18px;
+  margin: 0 0 7px;
+  font-size: 16px;
 }
 
 .help-overview-card p,
 .help-section-card p {
   margin: 0;
   color: #c3d4f4;
-  line-height: 1.5;
+  line-height: 1.42;
+  font-size: 14px;
 }
 
 .help-tool-actions {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  margin-top: 14px;
+  margin-top: 10px;
   align-items: start;
 }
 
 .help-tool-action-btn {
-  min-height: 96px;
+  min-height: 76px;
   padding: 2px 2px 0;
   border: 0;
   background: transparent;
@@ -247,9 +249,9 @@ html.embed-mode .help-page-actions {
 }
 
 .help-tool-action-media {
-  inline-size: 58px;
-  block-size: 58px;
-  border-radius: 18px;
+  inline-size: 46px;
+  block-size: 46px;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -265,9 +267,9 @@ html.embed-mode .help-page-actions {
 
 .help-tool-action-btn calcite-icon,
 .help-tool-action-icon {
-  inline-size: 34px;
-  block-size: 34px;
-  flex: 0 0 34px;
+  inline-size: 28px;
+  block-size: 28px;
+  flex: 0 0 28px;
 }
 
 .help-tool-action-icon {
@@ -331,11 +333,13 @@ html.embed-mode .help-page-actions {
   filter: none;
 }
 
-.help-tool-action-btn.ai {
+.help-tool-action-btn.ai,
+.help-tool-action-btn.issue[aria-disabled="true"] {
   color: rgba(231,237,247,0.58);
 }
 
-.help-tool-action-btn.ai .help-tool-action-media {
+.help-tool-action-btn.ai .help-tool-action-media,
+.help-tool-action-btn.issue[aria-disabled="true"] .help-tool-action-media {
   border-color: rgba(180,191,209,0.16);
   background:
     linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%),
@@ -343,11 +347,13 @@ html.embed-mode .help-page-actions {
   filter: grayscale(1) brightness(0.82);
 }
 
-.help-tool-action-btn.ai:hover {
+.help-tool-action-btn.ai:hover,
+.help-tool-action-btn.issue[aria-disabled="true"]:hover {
   transform: none;
 }
 
-.help-tool-action-btn.ai:hover .help-tool-action-media {
+.help-tool-action-btn.ai:hover .help-tool-action-media,
+.help-tool-action-btn.issue[aria-disabled="true"]:hover .help-tool-action-media {
   border-color: rgba(180,191,209,0.16);
   background:
     linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%),
@@ -356,11 +362,13 @@ html.embed-mode .help-page-actions {
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 10px 18px rgba(0,0,0,0.22);
 }
 
-.help-tool-action-btn.ai:hover calcite-icon {
+.help-tool-action-btn.ai:hover calcite-icon,
+.help-tool-action-btn.issue[aria-disabled="true"]:hover calcite-icon {
   color: #9aa5b4;
 }
 
-.help-tool-action-btn.ai[aria-disabled="true"] {
+.help-tool-action-btn.ai[aria-disabled="true"],
+.help-tool-action-btn.issue[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -475,7 +483,7 @@ html.embed-mode .help-page-actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .help-section-header calcite-icon {
@@ -486,7 +494,7 @@ html.embed-mode .help-page-actions {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 10px;
+  padding: 4px 9px;
   border-radius: 999px;
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--panel-border-soft);
@@ -495,22 +503,28 @@ html.embed-mode .help-page-actions {
   font-weight: 800;
   letter-spacing: 0.45px;
   text-transform: uppercase;
-  margin-bottom: 12px;
+  margin-bottom: 9px;
 }
 
 .help-feature-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.help-feature-list.compact {
+  gap: 7px;
+  margin-top: 10px;
 }
 
 .help-feature-item {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
   color: #e9f0fb;
-  line-height: 1.45;
+  line-height: 1.38;
+  font-size: 14px;
 }
 
 .help-feature-item calcite-icon {
@@ -520,9 +534,9 @@ html.embed-mode .help-page-actions {
 }
 
 .help-details {
-  margin-top: 16px;
+  margin-top: 12px;
   border-top: 1px solid var(--panel-border-soft);
-  padding-top: 12px;
+  padding-top: 10px;
 }
 
 .help-details summary {
@@ -908,6 +922,11 @@ body.walkthrough-modal-open .help-page {
   .help-page-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .help-overview-grid,
+  .help-section-grid {
+    grid-template-columns: 1fr;
   }
 
   .help-tool-actions {

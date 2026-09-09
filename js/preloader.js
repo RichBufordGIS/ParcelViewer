@@ -22,7 +22,7 @@ export function createParcelPreloader(root) {
           <div class="parcel-preloader-brand-text">
             <div class="parcel-preloader-brand-welcome">Welcome To Jackson County GIS</div>
             <div class="parcel-preloader-brand-title">Parcel Viewer</div>
-            <div class="parcel-preloader-brand-subtitle">Internal</div>
+            <div class="parcel-preloader-brand-subtitle">Beta</div>
           </div>
         </div>
         <div class="parcel-preloader-status-block">

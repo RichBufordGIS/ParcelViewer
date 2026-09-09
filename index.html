@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Parcel Viewer Internal</title>
+	<title>Parcel Viewer Beta</title>
 	<!-- Calcite + ArcGIS ESM -->
 	<script type="module" src="https://js.arcgis.com/5.0/"></script>
 	<script type="module" src="./js/mapInfoPanel.js"></script>
@@ -12,6 +12,7 @@
 	<link rel="stylesheet" href="./css/preloader.css" />
 	<link rel="stylesheet" href="./css/tylerPhotoViewer.css" />
 	<link rel="stylesheet" href="./css/mobile.css" />
+	<link rel="stylesheet" href="./css/search.css" />
 
     <style>
         #right-info {
@@ -84,7 +85,7 @@
 			background-color:#1A2B56;
 			color: white;
 			float: left;
-			padding: 2%; 
+			padding: 2%;
 			width: 94%;
 			border: 1px solid #1C5CFF;
 			border-radius: 12px;
@@ -95,29 +96,49 @@
 <body>
 	<div id="preloader" aria-live="polite"></div>
 
+	<div id="appSplashOverlay" class="app-splash-overlay" role="dialog" aria-modal="true" aria-labelledby="appSplashTitle" aria-describedby="appSplashDescription">
+		<div class="app-splash-card">
+			<div class="app-splash-brand">
+				<img class="app-splash-brand-logo" src="https://jcgis.jacksongov.org/images/jackson-county-logo.png" alt="Jackson County GIS logo">
+				<div class="app-splash-brand-text">
+					<div class="app-splash-welcome">Welcome To Jackson County GIS</div>
+					<h1 id="appSplashTitle">Parcel Viewer</h1>
+					<div class="app-splash-subtitle"><span>Beta</span><small>A GIS Research Project</small></div>
+				</div>
+			</div>
+			<p id="appSplashDescription">
+				This viewer explores a more natural way to understand parcels that overlap in the same location, including condominiums and elevated property. The 3D view helps show which building, floor, or parcel is being selected before reviewing parcel information, valuations, photos, or land-record change request options such as split and combine.
+			</p>
+			<div class="app-splash-points">
+				<div>
+					<calcite-icon icon="map" scale="m"></calcite-icon>
+					<strong>2D map first</strong>
+					<span>Use the standard parcel map for everyday parcel search and review.</span>
+				</div>
+				<div>
+					<calcite-icon icon="cube" scale="m"></calcite-icon>
+					<strong>3D when needed</strong>
+					<span>Condo and elevated parcel selections can open a 3D view to clarify stacked property records.</span>
+				</div>
+				<div>
+					<calcite-icon icon="list-check" scale="m"></calcite-icon>
+					<strong>Step by step</strong>
+					<span>The viewer shows the building, floor, parcel, and final scene focus as the selection is prepared.</span>
+				</div>
+			</div>
+			<button id="appSplashContinueBtn" class="app-splash-continue" type="button">
+				<calcite-icon icon="sign-in" scale="s"></calcite-icon>
+				<span>Continue to Parcel Viewer</span>
+			</button>
+		</div>
+	</div>
+
 	<header>
 		<div class="header-left">
 			<img src="https://jcgis.jacksongov.org/images/largelogo.png" alt="Logo">
 			<div class="title-stack">
 				<h2>Parcel Viewer</h2>
-				<div class="subtitle">Internal</div>
-			</div>
-
-			<div class="header-tabs" role="tablist" aria-label="Main tabs">
-				<button id="parcelViewerTab" class="header-tab active" role="tab" aria-selected="true" aria-controls="page-parcel" tabindex="0">
-					<calcite-icon icon="parcel-layer" scale="m"></calcite-icon>
-					<span>Parcel Viewer</span>
-				</button>
-
-				<button id="publicWorksTab" class="header-tab" role="tab" aria-selected="false" aria-controls="page-pw" tabindex="-1">
-					<calcite-icon icon="wrench" scale="m"></calcite-icon>
-					<span>Public Works</span>
-				</button>
-
-				<button id="specialAssessTab" class="header-tab" role="tab" aria-selected="false" aria-controls="page-sa" tabindex="-1">
-					<calcite-icon icon="chart-magnifying-glass" scale="m"></calcite-icon>
-					<span>Property Information</span>
-				</button>
+				<div class="subtitle">Beta</div>
 			</div>
 
 			<div class="header-search-group">
@@ -130,19 +151,6 @@
 					</button>
 					<div id="mobileHeaderMenuBackdrop" class="mobile-header-menu-backdrop" hidden></div>
 					<div id="mobileHeaderMenu" class="mobile-header-menu" aria-label="Menu" hidden>
-						<button id="mobileParcelViewerTabBtn" class="mobile-header-menu-item" type="button">
-							<calcite-icon icon="parcel-layer" scale="s"></calcite-icon>
-							<span>Parcel Viewer</span>
-						</button>
-						<button id="mobilePublicWorksTabBtn" class="mobile-header-menu-item" type="button">
-							<calcite-icon icon="wrench" scale="s"></calcite-icon>
-							<span>Public Works</span>
-						</button>
-						<button id="mobileSpecialAssessTabBtn" class="mobile-header-menu-item" type="button">
-							<calcite-icon icon="chart-magnifying-glass" scale="s"></calcite-icon>
-							<span>Property Information</span>
-						</button>
-						<div class="mobile-header-menu-divider" role="separator"></div>
 						<button id="mobileMapInfoBtn" class="mobile-header-menu-item" type="button">
 							<calcite-icon icon="book" scale="s"></calcite-icon>
 							<span>Map Layer Info</span>
@@ -150,10 +158,6 @@
 						<button id="mobileHelpBtn" class="mobile-header-menu-item" type="button">
 							<calcite-icon icon="question" scale="s"></calcite-icon>
 							<span>Help</span>
-						</button>
-						<button id="mobileAccountBtn" class="mobile-header-menu-item" type="button">
-							<calcite-icon icon="user" scale="s"></calcite-icon>
-							<span>Account</span>
 						</button>
 					</div>
                     <button id="settingsBtn" class="header-icon-btn" type="button" aria-label="Map Layer Info">
@@ -164,23 +168,6 @@
 						<calcite-icon icon="question" scale="m"></calcite-icon>
 					</button>
 
-					<button id="userAuthBtn" class="header-icon-btn header-user-btn" type="button" aria-label="Sign In">
-						<span class="header-user-avatar">
-							<calcite-icon icon="user" scale="m"></calcite-icon>
-							<span id="userAuthLicense" class="header-user-license" hidden>
-								<calcite-icon id="userAuthLicenseSymbol" class="header-user-license-symbol" icon="check" scale="s"></calcite-icon>
-								<calcite-icon id="userAuthLicensePlus" class="header-user-license-plus" icon="plus" scale="s" hidden></calcite-icon>
-							</span>
-						</span>
-						<span id="userAuthLabel" class="header-user-label">Sign in</span>
-						<span id="userAuthName" class="header-user-name" hidden></span>
-						<span id="userAuthTypeBadge" class="header-user-type-badge" hidden></span>
-					</button>
-					<div id="userAuthMenu" class="header-user-menu embedded-account-frame" hidden>
-						<div class="header-user-menu-frame-shell">
-							<iframe id="userAuthMenuFrame" class="header-user-menu-frame" src="./user-account-infopage.html?embed=1" title="Parcel Viewer account"></iframe>
-						</div>
-					</div>
 				</div>
 			</div>
 		</header>
@@ -192,20 +179,15 @@
 				<div class="auth-brand-text">
 					<div class="auth-brand-welcome">Welcome To Jackson County GIS</div>
 					<div class="auth-brand-title">Parcel Viewer</div>
-					<div class="auth-brand-subtitle">Internal</div>
+					<div class="auth-brand-subtitle">Beta</div>
 				</div>
 			</div>
 			<div id="splashNotice" class="splash-notice">
-				<div class="splash-update-eyebrow">Q3 2026 Beta Update</div>
-				<div class="splash-update-title">Parcel Search and Multi-Select Improvements</div>
+				<div class="splash-update-eyebrow">Beta Research Project</div>
+				<div class="splash-update-title">3D Parcel Context for Overlapping Property</div>
 				<p class="splash-notice-text">
-					Owner search, pasted parcel lists, selected parcel markers, and current owner/TCA values have been updated in Parcel Viewer.
+					This beta explores a more natural way to review parcels that overlap vertically, including condos and elevated property. The 3D view helps clarify which unit, floor, or shared property area is being selected before reviewing parcel information, valuations, photos, or starting a land record change request such as a split or combine.
 				</p>
-				<div class="splash-update-actions">
-					<a class="splash-update-link" href="./q3-2026-internal-parcel-viewer-beta-updates.html" target="_blank" rel="noopener noreferrer">
-						View Full Q3 Update
-					</a>
-				</div>
 			</div>
 			<h3 id="authOverlayTitle" hidden>Sign In</h3>
 			<p id="authOverlayDescription" hidden></p>
@@ -243,12 +225,12 @@
 
 	<div id="ui-container">
 		<!-- PARCEL PAGE -->
-		<div id="page-parcel" class="app-page visible" role="tabpanel" aria-labelledby="parcelViewerTab">
+		<div id="page-parcel" class="app-page visible">
 			<div id="left-sidebar-shell" class="collapsed">
 			<div id="left-sidebar">
 				<div id="buildingPanel" class="panel">
 					<h3>Buildings</h3>
-					<input type="text" id="buildingSearch" placeholder="Search buildings" aria-label="Search buildings" />
+					<input type="text" id="buildingSearch" placeholder="Search buildings" aria-label="Search buildings" hidden />
 					<div id="buildingList"></div>
 				</div>
 
@@ -292,160 +274,57 @@
 						<span class="view-toggle-thumb" aria-hidden="true"></span>
 					</label>
 				</div>
-				<arcgis-map id="map2d" class="view-element visible" data-item-id="38084c9b556e44e0acd0d43439ba6cee" data-portal-url="https://jcgis.jacksongov.org/gisportal">
-					<arcgis-expand id="basemapExpand2d" slot="top-right" mode="floating" visual-scale="l" expand-icon="basemap" collapse-icon="chevrons-right">
-						<div class="map-tool-popover">
-						<calcite-panel heading="Basemaps">
-							<div class="basemap-gallery-panel">
-								<arcgis-basemap-gallery id="basemapGallery2d"></arcgis-basemap-gallery>
-							</div>
-						</calcite-panel>
-						</div>
-					</arcgis-expand>
-
-					<arcgis-expand id="layerListExpand2d" slot="top-right" mode="floating" visual-scale="l" expand-icon="layers" collapse-icon="chevrons-right">
-						<div class="map-tool-popover">
-							<calcite-panel heading="Layer List">
-								<div>
-									<arcgis-layer-list></arcgis-layer-list>
-								</div>
-							</calcite-panel>
-						</div>
-					</arcgis-expand>
-
-					<arcgis-expand id="measurementExpand2d" slot="top-right" mode="floating" visual-scale="l" expand-icon="measure" collapse-icon="chevrons-right">
-						<div class="map-tool-popover">
-							<calcite-panel heading="Measurement">
-								<div style="padding: 12px; display: grid; gap: 8px; width: 320px;">
-								<div>Choose a measurement tool</div>
-
-								<calcite-button id="measure2dLineOptionBtn" width="full" icon-start="measure-line">
-									Distance
-								</calcite-button>
-
-								<calcite-button id="measure2dAreaOptionBtn" width="full" icon-start="measure-area">
-									Area
-								</calcite-button>
-
-								<calcite-button id="measure2dStartBtn" width="full" icon-start="play">
-									Start
-								</calcite-button>
-
-								<calcite-button id="measure2dStopBtn" appearance="outline" width="full" icon-start="stop" hidden>
-									Stop
-								</calcite-button>
-
-								<div id="measure2dSubtitle">Choose a tool, then Start.</div>
-
-								<div id="measure2dLineShell" hidden>
-									<arcgis-distance-measurement-2d id="distanceMeasure2d" hide-start-button></arcgis-distance-measurement-2d>
-								</div>
-
-								<div id="measure2dAreaShell" hidden>
-									<arcgis-area-measurement-2d id="areaMeasure2d" hide-start-button></arcgis-area-measurement-2d>
-								</div>
-								</div>
-							</calcite-panel>
-						</div>
-					</arcgis-expand>
+				<arcgis-map id="map2d" class="view-element visible" data-item-id="0561cabf74ff48a4af41d3130fd103d9" data-portal-url="https://jacksoncomo.maps.arcgis.com">
 
 
-					<arcgis-expand id="rectangleSelectExpand2d" slot="top-right" mode="floating" visual-scale="l" expand-icon="cursor-selection" collapse-icon="chevrons-right">
-						<div class="map-tool-popover">
-							<calcite-panel heading="Select by rectangle">
-								<div style="padding: 12px; display: grid; gap: 8px; width: 280px;">
-								<div>Click Start, then drag a box on the 2D map.</div>
 
-								<calcite-button id="rectangleSelectStartBtn" kind="neutral" appearance="solid" icon-start="play" width="full">
-									Start
-								</calcite-button>
 
-								<calcite-button id="rectangleSelectStopBtn" kind="neutral" appearance="outline" icon-start="stop" width="full">
-									Stop
-								</calcite-button>
-								</div>
-							</calcite-panel>
-								</div>
-					</arcgis-expand>
+
+
+
+
 					<arcgis-zoom id="mapZoom" style="display:none;"></arcgis-zoom>
 
- 				<div class="map-nav-stack" slot="top-left">
- 					<calcite-button id="zoomInBtn2d" appearance="solid" kind="neutral" icon-start="plus" scale="l" title="Zoom in">
- 					</calcite-button>
- 
- 					<arcgis-home visual-scale="l"></arcgis-home> 
- 
- 					<calcite-button  id="zoomOutBtn2d" appearance="solid" kind="neutral" icon-start="minus" scale="l" title="Zoom out">
- 					</calcite-button>
- 					<arcgis-compass visual-scale="l"></arcgis-compass>
- 				</div>
+				<div class="map-nav-stack" slot="top-left">
+					<calcite-button id="zoomInBtn2d" appearance="solid" kind="neutral" icon-start="plus" scale="l" title="Zoom in">
+					</calcite-button>
+
+					<arcgis-home visual-scale="l"></arcgis-home>
+
+					<calcite-button  id="zoomOutBtn2d" appearance="solid" kind="neutral" icon-start="minus" scale="l" title="Zoom out">
+					</calcite-button>
+					<arcgis-compass visual-scale="l"></arcgis-compass>
+				</div>
+				<div class="map-locate-stack" slot="bottom-left">
+					<arcgis-locate id="locateMe2d" visual-scale="l" scale="5000"></arcgis-locate>
+				</div>
 				</arcgis-map>
-				<arcgis-scene id="scene" class="view-element" data-item-id="728ae853440448b88655549920c6b2b2" data-portal-url="https://jcgis.jacksongov.org/gisportal" environment="lighting: 'sunny'">
-					<arcgis-expand id="basemapExpand3d" slot="top-right" mode="floating" visual-scale="l" expand-icon="basemap" collapse-icon="chevrons-right">
-						<div class="map-tool-popover">
-						<calcite-panel heading="Basemaps">
-							<div class="basemap-gallery-panel">
-								<arcgis-basemap-gallery id="basemapGallery3d"></arcgis-basemap-gallery>
-							</div>
-						</calcite-panel>
-						</div>
-					</arcgis-expand>
+				<arcgis-scene id="scene" class="view-element" data-item-id="9b73428381b349a4b62110e5cbb9b9a8" data-portal-url="https://jacksoncomo.maps.arcgis.com" environment="lighting: 'sunny'">
 
-					<arcgis-expand id="layerListExpand3d" slot="top-right" mode="floating" visual-scale="l" expand-icon="layers" collapse-icon="chevrons-right">
-						<div class="map-tool-popover">
-							<calcite-panel heading="Layer List">
-								<div>
-									<arcgis-layer-list></arcgis-layer-list>
-								</div>
-							</calcite-panel>
-						</div>
-					</arcgis-expand>
-					<arcgis-expand id="measurementExpand3d" slot="top-right" mode="floating" visual-scale="l" expand-icon="measure" collapse-icon="chevrons-right">
-						<div class="map-tool-popover">
-							<calcite-panel heading="Measurement">
-								<div style="padding: 12px; display: grid; gap: 8px; width: 320px;">
-								<div>Choose a measurement tool</div>
 
-								<calcite-button id="measure3dLineOptionBtn" width="full" icon-start="measure-line">
-									Distance
-								</calcite-button>
 
-								<calcite-button id="measure3dAreaOptionBtn" width="full" icon-start="measure-area">
-									Area
-								</calcite-button>
 
-								<calcite-button id="measure3dStartBtn" width="full" icon-start="play">
-									Start
-								</calcite-button>
-
-								<calcite-button id="measure3dStopBtn" appearance="outline" width="full" icon-start="stop" hidden>
-									Stop
-								</calcite-button>
-
-								<div id="measure3dSubtitle">Choose a tool, then Start.</div>
-
-								<div id="measure3dLineShell" hidden>
-									<arcgis-distance-measurement-3d id="distanceMeasure3d" hide-start-button></arcgis-distance-measurement-3d>
-								</div>
-
-								<div id="measure3dAreaShell" hidden>
-									<arcgis-area-measurement-3d id="areaMeasure3d" hide-start-button></arcgis-area-measurement-3d>
-								</div>
-								</div>
-							</calcite-panel>
-						</div>
-					</arcgis-expand>
- 					<div class="map-nav-stack" slot="top-left">
+					<div class="map-nav-stack" slot="top-left">
 						<calcite-button id="zoomInBtn3d" appearance="solid" kind="neutral" icon-start="plus" scale="l" title="Zoom in">
 						</calcite-button>
- 					<arcgis-home visual-scale="l"></arcgis-home> 
- 
- 					<calcite-button id="zoomOutBtn3d" appearance="solid" kind="neutral" icon-start="minus" scale="l" title="Zoom out">
- 					</calcite-button>
-				
+					<arcgis-home visual-scale="l"></arcgis-home>
+
+					<calcite-button id="zoomOutBtn3d" appearance="solid" kind="neutral" icon-start="minus" scale="l" title="Zoom out">
+					</calcite-button>
+
 					<arcgis-navigation-toggle visual-scale="l" slot="top-left"></arcgis-navigation-toggle>
-    				<arcgis-compass visual-scale="l" slot="top-left"> </arcgis-compass>
+				<arcgis-compass visual-scale="l" slot="top-left"> </arcgis-compass>
 </div>
+					<div id="condoSceneViewToggle" class="condo-scene-view-toggle" slot="bottom-right" role="group" aria-label="3D condo view mode">
+						<button type="button" class="condo-scene-view-option" data-condo-scene-view="building" title="Building view">
+							<calcite-icon icon="cube" scale="s"></calcite-icon>
+							<span>Building</span>
+						</button>
+						<button type="button" class="condo-scene-view-option active" data-condo-scene-view="floor-plan" title="Floor plan view">
+							<calcite-icon icon="layers" scale="s"></calcite-icon>
+							<span>Floor Plan</span>
+						</button>
+					</div>
 				</arcgis-scene>
 		</div>
 		<div id="right-sidebar-shell" class="collapsed">
@@ -455,7 +334,7 @@
 
 	<div id="right-sidebar">
 		<div id="rightSidebarContent" style="width:100%; height:100%;">
-            		
+
 		</div>
 	</div>
 </div>
@@ -464,7 +343,7 @@
 		<!-- PUBLIC WORKS PAGE -->
 		<div id="page-pw" class="app-page" role="tabpanel" aria-labelledby="publicWorksTab">
 			<div class="page-view">
-				<arcgis-map id="pwMap" class="view-element visible" data-item-id="b68559fd7d424da79ca4667eeca1f9eb" data-portal-url="https://jcgis.jacksongov.org/gisportal">
+				<arcgis-map id="pwMap" class="view-element visible" data-item-id="b68559fd7d424da79ca4667eeca1f9eb" data-portal-url="https://jacksoncomo.maps.arcgis.com">
 					<arcgis-expand id="basemapExpandPw" slot="top-right" mode="floating" visual-scale="l" expand-icon="basemap" collapse-icon="chevrons-right">
 						<div class="map-tool-popover">
 						<calcite-panel heading="Basemaps">
@@ -535,7 +414,7 @@
 			</div>
 
 				<div id="taxView" class="page-view">
-				<arcgis-map id="saMap" class="visible" data-item-id="683b226c7ebf4b5baf9f7c2ae7370359" data-portal-url="https://jcgis.jacksongov.org/gisportal">
+				<arcgis-map id="saMap" class="visible" data-item-id="683b226c7ebf4b5baf9f7c2ae7370359" data-portal-url="https://jacksoncomo.maps.arcgis.com">
 					<arcgis-expand id="basemapExpandAnalysis" slot="top-right" mode="floating" visual-scale="l" expand-icon="basemap" collapse-icon="chevrons-right">
 						<div class="map-tool-popover">
 						<calcite-panel heading="Basemaps">
@@ -555,7 +434,7 @@
 						</calcite-panel>
 						</div>
 					</arcgis-expand>
-			
+
 				</arcgis-map>
 				<arcgis-feature-table
 					id="parcelsTable"
@@ -563,7 +442,7 @@
 				</arcgis-feature-table>
 			</div>
 		</div>
-	</div> 
+	</div>
 	<footer id="footer">
 		&copy; 2026 - Jackson County Missouri GIS
 		<img src="https://jcgis.jacksongov.org/images/Icons/globe-glow.svg"

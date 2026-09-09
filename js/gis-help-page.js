@@ -1,9 +1,8 @@
 const HELP_TICKET_FORM_URL = "https://gisaws.jacksongov.org/tickets/gis/";
-const HELP_TICKET_APP_LABEL = "Parcel Viewer Internal";
+const HELP_TICKET_APP_LABEL = "Public Parcel Viewer";
 const HELP_PAGE_CONTEXT_STORAGE_KEY = "jcgis-help-page-context";
 const PARCEL_VIEWER_PAGE_URL = "./index.html";
 const EMBED_HELP_MESSAGE_TARGET = "jcgis-help-close";
-const EMBED_HELP_AI_MODAL_MESSAGE_TARGET = "jcgis-help-ai-modal";
 const EMBED_HELP_TICKET_MODAL_MESSAGE_TARGET = "jcgis-help-ticket-modal";
 const EMBED_HELP_WALKTHROUGH_MODAL_MESSAGE_TARGET = "jcgis-help-walkthrough-modal";
 const EMBED_HELP_TOUR_MESSAGE_TARGET = "jcgis-start-help-tour";
@@ -124,7 +123,7 @@ function syncVisibleSections(context) {
     ? context.accessiblePageKeys.map(normalizePageKey).filter(Boolean)
     : [];
 
-  const effectiveKeys = visibleKeys.length ? visibleKeys : ["parcel", "pw", "sa"];
+  const effectiveKeys = visibleKeys.length ? visibleKeys : ["parcel"];
 
   Object.entries(sectionIds).forEach(([key, el]) => {
     if (!el) return;
@@ -136,11 +135,8 @@ function syncVisibleSections(context) {
 
 function wireNavigation(currentPage) {
   const helpCloseBtn = document.getElementById("helpCloseBtn");
-  const helpAssistantBtn = document.getElementById("helpAssistantBtn");
   const helpWalkthroughBtn = document.getElementById("helpWalkthroughBtn");
   const helpIssueBtn = document.getElementById("helpIssueBtn");
-  const aiComingSoonModal = document.getElementById("aiComingSoonModal");
-  const aiComingSoonCloseXBtn = document.getElementById("aiComingSoonCloseXBtn");
   const ticketTypeModal = document.getElementById("ticketTypeModal");
   const ticketTypeModalCloseBtn = document.getElementById("ticketTypeModalCloseBtn");
   const ticketTypeChoices = document.getElementById("ticketTypeChoices");
@@ -148,16 +144,6 @@ function wireNavigation(currentPage) {
   const walkthroughModalCloseBtn = document.getElementById("walkthroughModalCloseBtn");
   const walkthroughModalFrame = document.getElementById("walkthroughModalFrame");
   const embedded = isEmbeddedHelp();
-
-  const setAiComingSoonModalOpen = (open) => {
-    if (!aiComingSoonModal) return;
-    aiComingSoonModal.hidden = !open;
-    aiComingSoonModal.setAttribute("aria-hidden", open ? "false" : "true");
-    document.body.classList.toggle("ai-modal-open", open);
-    if (embedded) {
-      window.parent.postMessage({ type: EMBED_HELP_AI_MODAL_MESSAGE_TARGET, open }, window.location.origin);
-    }
-  };
 
   const setTicketTypeModalOpen = (open) => {
     if (!ticketTypeModal) return;
@@ -199,10 +185,6 @@ function wireNavigation(currentPage) {
   };
 
   helpCloseBtn?.addEventListener("click", () => {
-    if (aiComingSoonModal && !aiComingSoonModal.hidden) {
-      setAiComingSoonModalOpen(false);
-      return;
-    }
     if (embedded) {
       window.parent.postMessage({ type: EMBED_HELP_MESSAGE_TARGET }, window.location.origin);
       return;
@@ -210,14 +192,9 @@ function wireNavigation(currentPage) {
     window.location.href = buildParcelViewerUrl({ page: currentPage });
   });
 
-  helpAssistantBtn?.addEventListener("click", (event) => {
-    event.preventDefault();
-    if (helpAssistantBtn.getAttribute("aria-disabled") === "true") return;
-    setAiComingSoonModalOpen(true);
-  });
-
   helpIssueBtn?.addEventListener("click", (event) => {
     event.preventDefault();
+    if (helpIssueBtn.disabled || helpIssueBtn.getAttribute("aria-disabled") === "true") return;
     setTicketTypeModalOpen(true);
   });
 
@@ -254,16 +231,6 @@ function wireNavigation(currentPage) {
     }
   });
 
-  aiComingSoonCloseXBtn?.addEventListener("click", () => {
-    setAiComingSoonModalOpen(false);
-  });
-
-  aiComingSoonModal?.addEventListener("click", (event) => {
-    if (event.target === aiComingSoonModal) {
-      setAiComingSoonModalOpen(false);
-    }
-  });
-
   window.addEventListener("message", (event) => {
     if (event.origin !== window.location.origin) return;
     if (event.data?.type === GUIDED_WALKTHROUGH_START_MESSAGE) {
@@ -279,9 +246,6 @@ function wireNavigation(currentPage) {
     if (event.key === "Escape" && walkthroughModal && !walkthroughModal.hidden) {
       setWalkthroughModalOpen(false);
       return;
-    }
-    if (event.key === "Escape" && aiComingSoonModal && !aiComingSoonModal.hidden) {
-      setAiComingSoonModalOpen(false);
     }
   });
 }
