@@ -6,23 +6,22 @@ The Jackson County Public Parcel Viewer was developed through a collaborative ef
 
 ## Development and testing contributors
 
-The following team members are acknowledged for their assistance with developing and testing this web application. Names are listed alphabetically by first name;
+The following team members are acknowledged for their assistance with developing and testing this web application;
 
-
-- Amy Petrillo
-- Dustin Schmidt
-- Eric Rabe
-- Gary Bindley
-- Giselle Castaneda
-- John Adams
-- Kevin Kandola
-- Lester Carver
-- Matt Wagner
-- Phillip Stehman
-- Randy Diehl
-- Vince Brice
-- Will Buskirk
-- Richard Buford
+John Adams
+Gary Bindley
+Richard Buford
+Lester Carver
+Kevin Kandola
+Amy Petrillo
+Dustin Schmidt
+Eric Rabe
+Giselle Castaneda
+Matt Wagner
+Phillip Stehman
+Randy Diehl
+Vince Brice
+Will Buskirk
 
 This acknowledgment recognizes the team's collective development and testing support. It does not assign specific features, code changes, or test results to individual contributors. Additional contributors and more detailed contributions can be recorded here as they are identified.
 
