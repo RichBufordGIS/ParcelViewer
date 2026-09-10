@@ -2,15 +2,11 @@
 
 This application was developed through a collaborative effort by the Jackson County GIS team and supporting county staff. Contributions spanned project planning, system design, application development, testing, and continuous refinement. The project addressed several long-standing operational challenges, including the transition from parcel updates occurring once per week to nightly updates through Portal-to-AGOL collaboration. Another major improvement was multi-parcel selection, which improved the speed and efficiency of parcel review. These and other team contributions helped modernize how the Assessment team can review and display overlapping land records in a more intuitive and effective way.
 
-Development Team:
 - John Adams
 - Gary Bindley
 - Richard Buford
 - Lester Carver
 - Kevin Kandola
-
-Contributors:
-
 - Amy Petrillo
 - Dustin Schmidt
 - Eric Rabe
